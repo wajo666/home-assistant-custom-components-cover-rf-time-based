@@ -73,6 +73,7 @@ ATTR_POSITION_TYPE = 'position_type'
 ATTR_POSITION_TYPE_CURRENT = 'current'
 ATTR_POSITION_TYPE_TARGET = 'target'
 ATTR_COMMAND = 'command'
+ATTR_DEVICE_ID = 'device_id'
 ATTR_TILT_POSITION = ATTR_TILT_POSITION
 
 DEFAULT_TRAVEL_TIME = 25
@@ -190,9 +191,20 @@ def devices_from_config(domain_config):
     return devices
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    ents = devices_from_config(config)
-    async_add_entities(ents)
+    """Set up the cover platform."""
+    _LOGGER.info("Starting async_setup_platform for cover_rf_time_based")
+    _LOGGER.debug("Config keys: %s", list(config.keys()) if config else "None")
+
+    try:
+        ents = devices_from_config(config)
+        _LOGGER.info("Adding %d entities to Home Assistant", len(ents))
+        async_add_entities(ents)
+    except Exception as ex:
+        _LOGGER.error("Failed to setup platform: %s", ex, exc_info=True)
+        return False
+
     platform = entity_platform.current_platform.get()
+    _LOGGER.debug("Registering custom services")
     platform.async_register_entity_service(
         "set_known_position",
         {
@@ -213,6 +225,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         {vol.Required(ATTR_COMMAND): cv.string},
         "async_send_command",
     )
+
+    _LOGGER.info("cover_rf_time_based platform setup completed successfully")
+    return True
 
 class CoverTimeBased(CoverEntity, RestoreEntity):
     def __init__(self, device_id: str, config: DeviceConfig, scripts: ScriptsConfig, wrapper: WrapperConfig):
@@ -285,6 +300,10 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         return self._device_class
 
     @property
+    def should_poll(self):
+        return False
+
+    @property
     def is_closed(self):
         return self.tc.is_closed()
 
@@ -322,8 +341,10 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     @property
     def extra_state_attributes(self):
         attr = {
-            ATTR_UNCONFIRMED_STATE: self._assume_uncertain_position,
+            ATTR_UNCONFIRMED_STATE: str(self._assume_uncertain_position),
             ATTR_CONFIDENT: not self._assume_uncertain_position,
+            ATTR_DEVICE_ID: self._device_id,
+            'tilt_is_allowed': (not self._tilt_only_when_closed) or self.tc.current_position() == 0,
         }
         if self._has_tilt:
             attr[ATTR_CURRENT_TILT_POSITION] = self.current_cover_tilt_position

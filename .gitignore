@@ -29,3 +29,7 @@ htmlcov/
 *.tmp
 .backup
 
+# Release helper files (not needed in repo)
+TODO_RELEASE.md
+RELEASE_NOTES_*.md
+

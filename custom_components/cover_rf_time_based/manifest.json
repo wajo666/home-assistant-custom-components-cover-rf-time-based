@@ -3,8 +3,10 @@
   "name": "Cover Time Based (script/entity)",
   "version": "2.0.0",
   "documentation": "https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based",
+  "issue_tracker": "https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/issues",
   "iot_class": "assumed_state",
   "codeowners": ["@davidramosweb", "@nagyrobi", "@Alfiegerner", "@wajo666"],
   "requirements": [],
-  "config_flow": false
+  "config_flow": false,
+  "integration_type": "device"
 }

@@ -56,11 +56,15 @@ CONF_TILTING_TIME_UP = 'tilting_time_up'
 CONF_SEND_STOP_AT_ENDS = 'send_stop_at_ends'
 CONF_ALWAYS_CONFIDENT = 'always_confident'
 CONF_BLOCK_TILT_IF_OPEN = 'block_tilt_if_open'
+# NEW: flag to allow tilt while open
+CONF_TILT_ONLY_WHEN_CLOSED = 'tilt_only_when_closed'
 DEFAULT_TRAVEL_TIME = 25
 DEFAULT_TILT_TIME = 1
 DEFAULT_SEND_STOP_AT_ENDS = False
 DEFAULT_ALWAYS_CONFIDENT = False
 DEFAULT_BLOCK_TILT_IF_OPEN = False
+# Default False allows independent tilt control regardless of cover position
+DEFAULT_TILT_ONLY_WHEN_CLOSED = False
 DEFAULT_DEVICE_CLASS = 'shutter'
 CONF_OPEN_SCRIPT_ENTITY_ID = 'open_script_entity_id'
 CONF_CLOSE_SCRIPT_ENTITY_ID = 'close_script_entity_id'
@@ -96,6 +100,8 @@ BASE_DEVICE_SCHEMA = vol.Schema(
         vol.Optional(CONF_SEND_STOP_AT_ENDS, default=DEFAULT_SEND_STOP_AT_ENDS): cv.boolean,
         vol.Optional(CONF_ALWAYS_CONFIDENT, default=DEFAULT_ALWAYS_CONFIDENT): cv.boolean,
         vol.Optional(CONF_BLOCK_TILT_IF_OPEN, default=DEFAULT_BLOCK_TILT_IF_OPEN): cv.boolean,
+        # NEW optional config
+        vol.Optional(CONF_TILT_ONLY_WHEN_CLOSED, default=DEFAULT_TILT_ONLY_WHEN_CLOSED): cv.boolean,
         vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
     }
 )
@@ -138,6 +144,7 @@ def devices_from_config(domain_config):
         send_stop_at_ends = config.pop(CONF_SEND_STOP_AT_ENDS)
         always_confident = config.pop(CONF_ALWAYS_CONFIDENT)
         block_tilt_if_open = config.pop(CONF_BLOCK_TILT_IF_OPEN)
+        tilt_only_when_closed = config.pop(CONF_TILT_ONLY_WHEN_CLOSED)
         availability_template = config.pop(CONF_AVAILABILITY_TEMPLATE, None)
         
         open_script_entity_id = config.pop(CONF_OPEN_SCRIPT_ENTITY_ID, None)
@@ -166,6 +173,7 @@ def devices_from_config(domain_config):
                                 send_stop_at_ends,
                                 always_confident,
                                 block_tilt_if_open,
+                                tilt_only_when_closed,
                                 device_class,
                                 availability_template)
         devices.append(device)
@@ -205,6 +213,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
                  send_stop_at_ends,
                  always_confident,
                  block_tilt_if_open,
+                 tilt_only_when_closed,
                  device_class,
                  availability_template):
         self.hass = None
@@ -214,7 +223,8 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._is_available = True
         self._send_stop_at_ends = send_stop_at_ends
         self._always_confident = always_confident
-        self._block_tilt_if_open = block_tilt_if_open
+        self._block_tilt_if_open = block_tilt_if_open  # kept for backward compatibility (currently unused logic)
+        self._tilt_only_when_closed = tilt_only_when_closed  # NEW behavior control flag
         self._assume_uncertain_position = not self._always_confident
         self._state = False
         self._unsubscribe_auto_update = None
@@ -280,20 +290,15 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             
             restored_tilt = 0 # Default TILT position if no better state is found
 
-            # 1. Rule: If main cover is fully or partially open (> 0%), TILT is 0% (Closed slats).
-            if main_position_restored is not None and main_position_restored > 0:
+            # Only enforce tilt=0 when cover is open if tilt_only_when_closed is True
+            if self._tilt_only_when_closed and main_position_restored is not None and main_position_restored > 0:
                 restored_tilt = 0
-                _LOGGER.debug(f"Cover {self.name}: Main position > 0 ({main_position_restored}%), TILT set to 0%.")
-            
-            # 2. Rule: If main cover is fully closed (0%), restore the saved TILT state, if it exists.
-            elif main_position_restored == 0 and tilt_position_restored is not None:
-                restored_tilt = tilt_position_restored
-                _LOGGER.debug(f"Cover {self.name}: Main position = 0%, TILT restored to {tilt_position_restored}%.")
-            
-            # 3. If main position is unknown, but TILT is known, use saved TILT.
+                _LOGGER.debug(f"Cover {self.name}: Main position > 0 ({main_position_restored}%), TILT set to 0% due to tilt_only_when_closed.")
             elif tilt_position_restored is not None:
-                 restored_tilt = tilt_position_restored
-            
+                # Restore saved tilt state regardless of main position
+                restored_tilt = tilt_position_restored
+                _LOGGER.debug(f"Cover {self.name}: TILT restored to {tilt_position_restored}%.")
+
             self.tilt_tc.set_position(restored_tilt)
             self._target_tilt_position = restored_tilt
         
@@ -332,12 +337,8 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     def current_cover_tilt_position(self):
         if not self._has_tilt:
             return None
-        
-        # Force TILT 0.0 if main cover is open (Logic: TILT control is only active when main position is 0%)
-        if self.tc.current_position() > 0:
-            return 0.0
-            
-        # FIX: Force float for correct slider rendering in Lovelace
+
+        # Return actual tilt position regardless of main cover position (independent control)
         return float(self.tilt_tc.current_position())
 
     @property
@@ -375,19 +376,19 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         attr = {}
         attr[ATTR_UNCONFIRMED_STATE] = str(self._assume_uncertain_position)
         
-        is_closed = self.tc.current_position() == 0
-        # Tilt is allowed only if main cover is fully closed (0%)
-        attr['tilt_is_allowed'] = is_closed
-        
+        # Tilt is allowed if tilt_only_when_closed is False, or if cover is fully closed
+        attr['tilt_is_allowed'] = (not self._tilt_only_when_closed) or self.tc.current_position() == 0
+
         if self._has_tilt:
             attr[ATTR_CURRENT_TILT_POSITION] = self.current_cover_tilt_position
             attr[CONF_TILTING_TIME_DOWN] = self._tilting_time_down
             attr[CONF_TILTING_TIME_UP] = self._tilting_time_up
             attr[CONF_TILT_STOP_SCRIPT_ENTITY_ID] = self._tilt_stop_script_entity_id
-        
+            attr[CONF_TILT_ONLY_WHEN_CLOSED] = self._tilt_only_when_closed
+
         attr[CONF_TRAVELLING_TIME_DOWN] = self._travel_time_down
         attr[CONF_TRAVELLING_TIME_UP] = self._travel_time_up 
-        attr[CONF_BLOCK_TILT_IF_OPEN] = self._block_tilt_if_open # Keeping the config entry
+        attr[CONF_BLOCK_TILT_IF_OPEN] = self._block_tilt_if_open # Keeping the legacy config entry
 
         return attr
 
@@ -432,10 +433,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         elif position > current_position:
             new_command = SERVICE_OPEN_COVER
             new_direction = TravelStatus.DIRECTION_UP
-            # TILT FIX: Reset TILT if moving UP/OPEN
-            if self._has_tilt:
-                self.tilt_tc.set_position(0)
-                self._target_tilt_position = 0
         else:
             if self.tc.is_traveling():
                 # FIX: Use _handle_command 
@@ -466,9 +463,9 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             _LOGGER.warning("Attempted to set tilt position on cover '%s', but tilt is not configured.", self.name)
             return
 
-        # Blocking TILT: TILT is only allowed if main position is 0%
-        if self.tc.current_position() != 0:
-            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d).", self.name, self.tc.current_position())
+        # Only block if explicitly configured to do so
+        if self._tilt_only_when_closed and self.tc.current_position() != 0:
+            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d) and tilt_only_when_closed is True.", self.name, self.tc.current_position())
             return
         
         current_tilt_position = self.tilt_tc.current_position()
@@ -529,11 +526,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self.tc.start_travel_up()
         self._target_position = 100
         self.start_auto_updater()
-        
-        # TILT FIX: Reset TILT immediately upon opening
-        if self._has_tilt:
-            self.tilt_tc.set_position(0)
-            self._target_tilt_position = 0
 
         # Update internal position based on current time
         self.tc.update_position()
@@ -549,8 +541,8 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             _LOGGER.warning("Attempted to close cover tilt on cover '%s', but tilt is not configured.", self.name)
             return
 
-        if self.tc.current_position() != 0:
-            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d).", self.name, self.tc.current_position())
+        if self._tilt_only_when_closed and self.tc.current_position() != 0:
+            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d) and tilt_only_when_closed is True.", self.name, self.tc.current_position())
             return
 
         self._assume_uncertain_position = not self._always_confident
@@ -568,8 +560,8 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             _LOGGER.warning("Attempted to open cover tilt on cover '%s', but tilt is not configured.", self.name)
             return
 
-        if self.tc.current_position() != 0:
-            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d).", self.name, self.tc.current_position())
+        if self._tilt_only_when_closed and self.tc.current_position() != 0:
+            _LOGGER.warning("Tilt command ignored for '%s'. Main cover is not fully closed (position: %d) and tilt_only_when_closed is True.", self.name, self.tc.current_position())
             return
 
         self._assume_uncertain_position = not self._always_confident
@@ -609,8 +601,8 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             self._target_position = position
         
         if self._has_tilt and tilt_position is not None:
-            # If cover is open, force TILT 0.
-            if self.tc.current_position() > 0:
+            # If tilt restricted and cover is open, force 0 else accept provided
+            if self._tilt_only_when_closed and self.tc.current_position() > 0:
                 self.tilt_tc.set_position(0)
                 self._target_tilt_position = 0
             else:
@@ -632,16 +624,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             target_position = self.tc.travel_to_position
             self.tc.stop() 
             is_intermediate_stop = target_position > 0 and target_position < 100
-            
-            # TILT FIX: Reset TILT on full closure (0%) or full opening (100%)
-            if self._has_tilt:
-                current_main_pos = self.tc.current_position()
-                if current_main_pos == 0 or current_main_pos == 100:
-                    # Reset TILT to 0% if the main cover is fully closed or open
-                    if self.tilt_tc.current_position() != 0:
-                        self.tilt_tc.set_position(0)
-                        self._target_tilt_position = 0
-                        state_needs_update = True 
 
             if is_intermediate_stop or self._send_stop_at_ends:
                 # FIX: Use _handle_command 
@@ -696,3 +678,4 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             await self.hass.services.async_call("cover", command, {"entity_id": self._cover_entity_id}, False)
         else:
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": entity_id}, False)
+

@@ -57,11 +57,11 @@ class TravelCalculator:
         self.travel_started_time = 0
         self.travel_to_position = self.last_known_position
     
-    # NEW METHOD TO BE CALLED BY Home Assistant INTERVAL
+    # UPDATED: Do not stop automatically here; let external logic (auto_stop_if_necessary) handle stop & side-effects.
     def update_position(self):
-        """Stops the travel calculation if the target position is reached."""
-        if self.position_reached():
-            self.stop()
+        """Called periodically to allow external logic to detect arrival; no direct state mutation here."""
+        # Intentionally left minimal. Keeping method for backward compatibility.
+        return
 
     def set_position(self, position):
         self.last_known_position = position

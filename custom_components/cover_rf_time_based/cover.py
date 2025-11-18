@@ -280,6 +280,62 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             )
         return feats
 
+    @property
+    def device_class(self):
+        return self._device_class
+
+    @property
+    def is_closed(self):
+        return self.tc.is_closed()
+
+    @property
+    def current_cover_position(self):
+        return self.tc.current_position()
+
+    @property
+    def current_cover_tilt_position(self):
+        if not self._has_tilt:
+            return None
+        return float(self.tilt_tc.current_position())
+
+    @property
+    def assumed_state(self):
+        return self._assume_uncertain_position
+
+    @property
+    def available(self):
+        if self._availability_template is None:
+            return True
+        try:
+            return bool(self._availability_template.async_render())
+        except Exception:
+            return True
+
+    @property
+    def is_opening(self):
+        return self.tc.is_traveling() and self.tc.travel_direction == TravelStatus.DIRECTION_UP
+
+    @property
+    def is_closing(self):
+        return self.tc.is_traveling() and self.tc.travel_direction == TravelStatus.DIRECTION_DOWN
+
+    @property
+    def extra_state_attributes(self):
+        attr = {
+            ATTR_UNCONFIRMED_STATE: self._assume_uncertain_position,
+            ATTR_CONFIDENT: not self._assume_uncertain_position,
+        }
+        if self._has_tilt:
+            attr[ATTR_CURRENT_TILT_POSITION] = self.current_cover_tilt_position
+            attr[CONF_TILTING_TIME_DOWN] = self._config.tilting_time_down
+            attr[CONF_TILTING_TIME_UP] = self._config.tilting_time_up
+            attr[CONF_TILT_STOP_SCRIPT_ENTITY_ID] = self._tilt_stop_script_entity_id
+            attr[CONF_TILT_ONLY_WHEN_CLOSED] = self._tilt_only_when_closed
+        attr[CONF_TRAVELLING_TIME_DOWN] = self._config.travel_time_down
+        attr[CONF_TRAVELLING_TIME_UP] = self._config.travel_time_up
+        attr[CONF_BLOCK_TILT_IF_OPEN] = self._config.block_tilt_if_open
+        return attr
+
     async def async_added_to_hass(self):
         self.hass = self.platform.hass
         await super().async_added_to_hass()

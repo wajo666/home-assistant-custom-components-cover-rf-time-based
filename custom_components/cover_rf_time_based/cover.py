@@ -13,6 +13,7 @@ from homeassistant.components.cover import (
     PLATFORM_SCHEMA,
     DEVICE_CLASSES_SCHEMA,
     CoverEntity,
+    CoverEntityFeature,
     ATTR_CURRENT_TILT_POSITION,
     ATTR_TILT_POSITION,
     SERVICE_OPEN_COVER_TILT,
@@ -37,15 +38,7 @@ from .travelcalculator import TravelStatus
 
 _LOGGER = logging.getLogger(__name__)
 
-# --- Supported Features constants ---
-SUPPORT_OPEN = 1
-SUPPORT_CLOSE = 2
-SUPPORT_SET_POSITION = 4
-SUPPORT_STOP = 8
-SUPPORT_OPEN_TILT = 16
-SUPPORT_CLOSE_TILT = 32
-SUPPORT_SET_TILT_POSITION = 64
-SUPPORT_STOP_TILT = 128
+# No need for manual SUPPORT constants - using CoverEntityFeature enum from HA 2025.x
 
 CONF_DEVICES = 'devices'
 CONF_ALIASES = 'aliases'
@@ -75,10 +68,16 @@ CONF_TILT_STOP_SCRIPT_ENTITY_ID = 'tilt_stop_script_entity_id'
 CONF_COVER_ENTITY_ID = 'cover_entity_id'
 CONF_AVAILABILITY_TEMPLATE = 'availability_template'
 ATTR_UNCONFIRMED_STATE = 'unconfirmed_state'
+ATTR_CONFIDENT = 'confident'
+ATTR_ACTION = 'action'
+ATTR_POSITION_TYPE = 'position_type'
+ATTR_POSITION_TYPE_CURRENT = 'current'
+ATTR_POSITION_TYPE_TARGET = 'target'
+ATTR_COMMAND = 'command'
+ATTR_DEVICE_ID = 'device_id'
+SERVICE_SET_KNOWN_ACTION = 'set_known_action'
+SERVICE_SEND_COMMAND = 'send_command'
 
-SUPPORT_POSITION = SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_SET_POSITION | SUPPORT_STOP
-SUPPORT_TILT = SUPPORT_OPEN_TILT | SUPPORT_CLOSE_TILT | SUPPORT_SET_TILT_POSITION | SUPPORT_STOP_TILT
-SUPPORT_RF_TILT = SUPPORT_POSITION | SUPPORT_TILT
 
 TRAVEL_TIME_INTERVAL = timedelta(milliseconds=100)
 
@@ -190,8 +189,26 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         {
             vol.Optional(ATTR_POSITION): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
             vol.Optional(ATTR_TILT_POSITION): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+            vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
+            vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string,
         },
         "async_set_known_position",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_KNOWN_ACTION,
+        {
+            vol.Required(ATTR_ACTION): cv.string,
+        },
+        "async_set_known_action",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SEND_COMMAND,
+        {
+            vol.Required(ATTR_COMMAND): cv.string,
+        },
+        "async_send_command",
     )
 
 
@@ -343,9 +360,23 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
 
     @property
     def supported_features(self):
+        """Flag supported features."""
+        features = (
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.SET_POSITION
+            | CoverEntityFeature.STOP
+        )
+
         if self._has_tilt:
-            return SUPPORT_RF_TILT
-        return SUPPORT_POSITION
+            features |= (
+                CoverEntityFeature.OPEN_TILT
+                | CoverEntityFeature.CLOSE_TILT
+                | CoverEntityFeature.SET_TILT_POSITION
+                | CoverEntityFeature.STOP_TILT
+            )
+
+        return features
 
     @property
     def assumed_state(self):
@@ -471,6 +502,18 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         current_tilt_position = self.tilt_tc.current_position()
         self._target_tilt_position = tilt_position
         
+        # If using cover_entity_id, try to use set_cover_tilt_position service directly
+        if self._cover_entity_id is not None:
+            self._assume_uncertain_position = not self._always_confident
+            self.tilt_tc.start_travel(tilt_position)
+            self.start_auto_updater()
+            # Call set_cover_tilt_position on the underlying cover entity
+            await self._handle_command(SERVICE_SET_COVER_TILT_POSITION, tilt_position=tilt_position)
+            self.tilt_tc.update_position()
+            self.async_write_ha_state()
+            return
+
+        # For script-based covers, use directional commands
         if tilt_position < current_tilt_position:
             new_command = SERVICE_CLOSE_COVER_TILT
             new_direction = TravelStatus.DIRECTION_DOWN
@@ -479,7 +522,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             new_direction = TravelStatus.DIRECTION_UP
         else:
             if self.tilt_tc.is_traveling():
-                # FIX: Use _handle_command 
                 await self._handle_command(SERVICE_STOP_COVER_TILT)
             self.async_write_ha_state()
             return
@@ -494,7 +536,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self.start_auto_updater()
 
         if send_command:
-            # FIX: Use _handle_command 
             await self._handle_command(new_command)
 
         # Update internal position based on current time
@@ -592,24 +633,97 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     async def async_set_known_position(self, **kwargs):
         position = kwargs.get(ATTR_POSITION)
         tilt_position = kwargs.get(ATTR_TILT_POSITION)
-        
-        self._assume_uncertain_position = not self._always_confident
+        confident = kwargs.get(ATTR_CONFIDENT, False)
+        position_type = kwargs.get(ATTR_POSITION_TYPE, ATTR_POSITION_TYPE_TARGET)
+
+        if position_type not in [ATTR_POSITION_TYPE_TARGET, ATTR_POSITION_TYPE_CURRENT]:
+            raise ValueError(f"{ATTR_POSITION_TYPE} must be one of {ATTR_POSITION_TYPE_TARGET}, {ATTR_POSITION_TYPE_CURRENT}")
+
+        _LOGGER.debug('%s: set_known_position :: position %s, tilt_position %s, confident %s, position_type %s, is_traveling %s',
+                      self._name, position, tilt_position, confident, position_type, self.tc.is_traveling())
+
+        self._assume_uncertain_position = not confident if not self._always_confident else False
         self._processing_known_position = True
 
         if position is not None:
-            self.tc.set_position(position)
-            self._target_position = position
-        
+            if position_type == ATTR_POSITION_TYPE_TARGET:
+                self._target_position = position
+                if self.tc.is_traveling():
+                    self.tc.start_travel(self._target_position)
+                    self.start_auto_updater()
+                else:
+                    self.tc.start_travel(self._target_position)
+                    self.start_auto_updater()
+            else:  # ATTR_POSITION_TYPE_CURRENT
+                self.tc.set_position(position)
+                self._target_position = position
+
         if self._has_tilt and tilt_position is not None:
             # If tilt restricted and cover is open, force 0 else accept provided
             if self._tilt_only_when_closed and self.tc.current_position() > 0:
                 self.tilt_tc.set_position(0)
                 self._target_tilt_position = 0
             else:
-                self.tilt_tc.set_position(tilt_position)
-                self._target_tilt_position = tilt_position
+                if position_type == ATTR_POSITION_TYPE_TARGET:
+                    self._target_tilt_position = tilt_position
+                    if self.tilt_tc.is_traveling():
+                        self.tilt_tc.start_travel(self._target_tilt_position)
+                        self.start_auto_updater()
+                    else:
+                        self.tilt_tc.start_travel(self._target_tilt_position)
+                        self.start_auto_updater()
+                else:  # ATTR_POSITION_TYPE_CURRENT
+                    self.tilt_tc.set_position(tilt_position)
+                    self._target_tilt_position = tilt_position
 
         self.async_write_ha_state()
+
+    async def async_set_known_action(self, **kwargs):
+        """Handle action captured outside of HA (open, close, stop)."""
+        action = kwargs.get(ATTR_ACTION)
+
+        if action not in ["open", "close", "stop"]:
+            raise ValueError("action must be one of open, close or stop.")
+
+        _LOGGER.debug('%s: set_known_action :: action %s', self._name, action)
+
+        if action == "stop":
+            self.tc.stop()
+            if self._has_tilt:
+                self.tilt_tc.stop()
+            self.async_write_ha_state()
+            return
+
+        if action == "open":
+            self.tc.start_travel_up()
+            self._target_position = 100
+        elif action == "close":
+            self.tc.start_travel_down()
+            self._target_position = 0
+
+        self.start_auto_updater()
+        self.async_write_ha_state()
+
+    async def async_send_command(self, **kwargs):
+        """Send device command through Cover."""
+        command = kwargs.get(ATTR_COMMAND)
+
+        _LOGGER.debug('%s: send_command :: command %s', self._name, command)
+
+        # Map command strings to actual methods
+        command_map = {
+            'open_cover': self.async_open_cover,
+            'close_cover': self.async_close_cover,
+            'stop_cover': self.async_stop_cover,
+            'open_cover_tilt': self.async_open_cover_tilt if self._has_tilt else None,
+            'close_cover_tilt': self.async_close_cover_tilt if self._has_tilt else None,
+            'stop_cover_tilt': self.async_stop_cover_tilt if self._has_tilt else None,
+        }
+
+        if command in command_map and command_map[command] is not None:
+            await command_map[command]()
+        else:
+            _LOGGER.warning('%s: Unknown or unsupported command: %s', self._name, command)
 
     async def auto_stop_if_necessary(self):
         self._processing_known_position = False
@@ -648,12 +762,13 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
 
 
     # FIX: Renamed method from _async_handle_command to _handle_command
-    async def _handle_command(self, command, *args):
+    async def _handle_command(self, command, *args, **kwargs):
         self._assume_uncertain_position = not self._always_confident
         self._processing_known_position = False
 
         entity_id = None
-        
+        service_data = {"entity_id": self._cover_entity_id} if self._cover_entity_id else {}
+
         if command == SERVICE_CLOSE_COVER:
             entity_id = self._close_script_entity_id
         elif command == SERVICE_OPEN_COVER:
@@ -668,14 +783,19 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             entity_id = self._effective_tilt_open_script
         elif command == SERVICE_STOP_COVER_TILT:
             entity_id = self._effective_tilt_stop_script
+
+        # Position commands - pass position data if provided (only used with cover_entity_id)
+        elif command == SERVICE_SET_COVER_TILT_POSITION and self._has_tilt:
+            if self._cover_entity_id and "tilt_position" in kwargs:
+                service_data[ATTR_TILT_POSITION] = kwargs["tilt_position"]
         else:
             return
 
-        if entity_id is None:
+        if entity_id is None and not self._cover_entity_id:
             entity_id = self._stop_script_entity_id # Fallback to main STOP
             
         if self._cover_entity_id is not None:
-            await self.hass.services.async_call("cover", command, {"entity_id": self._cover_entity_id}, False)
+            await self.hass.services.async_call("cover", command, service_data, False)
         else:
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": entity_id}, False)
 

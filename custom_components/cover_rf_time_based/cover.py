@@ -662,17 +662,27 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         await self._handle_command(SERVICE_OPEN_COVER_TILT)
 
     async def async_stop_cover(self, **kwargs):
+        """Stop the cover."""
+        # Only send stop command if cover is actually moving
+        if not self.tc.is_traveling():
+            _LOGGER.debug("%s: Stop command ignored - cover is not traveling", self.name)
+            return
+
         self.tc.stop()
-        # FIX: Use _handle_command 
         await self._handle_command(SERVICE_STOP_COVER)
         self.async_write_ha_state()
 
     async def async_stop_cover_tilt(self, **kwargs):
+        """Stop the cover tilt."""
         if not self._has_tilt:
             return
-            
+
+        # Only send stop command if tilt is actually moving
+        if not self.tilt_tc.is_traveling():
+            _LOGGER.debug("%s: Tilt stop command ignored - tilt is not traveling", self.name)
+            return
+
         self.tilt_tc.stop()
-        # FIX: Use _handle_command 
         await self._handle_command(SERVICE_STOP_COVER_TILT)
         self.async_write_ha_state()
 

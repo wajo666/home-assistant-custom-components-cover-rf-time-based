@@ -5,6 +5,8 @@ from datetime import timedelta
 TILT_BLOCKED_LOG = "Tilt command ignored for '%s'. Main cover is not fully closed (position: %d) and tilt_only_when_closed is True."
 
 # Configuration keys
+CONF_NAME = 'name'
+CONF_DEVICE_CLASS = 'device_class'
 CONF_DEVICES = 'devices'
 CONF_ALIASES = 'aliases'
 CONF_TRAVELLING_TIME_DOWN = 'travelling_time_down'

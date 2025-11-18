@@ -130,60 +130,103 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 # --- End of Configuration Schemas ---
 
 def devices_from_config(domain_config):
+    """Parse configuration and create cover devices."""
+    _LOGGER.debug("devices_from_config called with config keys: %s", list(domain_config.keys()))
     devices = []
-    for device_id, config in domain_config[CONF_DEVICES].items():
-        name = config.pop(CONF_NAME)
-        device_class = config.pop(CONF_DEVICE_CLASS)
-        travel_time_down = config.pop(CONF_TRAVELLING_TIME_DOWN)
-        travel_time_up = config.pop(CONF_TRAVELLING_TIME_UP)
-        
-        tilting_time_down = config.pop(CONF_TILTING_TIME_DOWN)
-        tilting_time_up = config.pop(CONF_TILTING_TIME_UP)
-        
-        send_stop_at_ends = config.pop(CONF_SEND_STOP_AT_ENDS)
-        always_confident = config.pop(CONF_ALWAYS_CONFIDENT)
-        block_tilt_if_open = config.pop(CONF_BLOCK_TILT_IF_OPEN)
-        tilt_only_when_closed = config.pop(CONF_TILT_ONLY_WHEN_CLOSED)
-        availability_template = config.pop(CONF_AVAILABILITY_TEMPLATE, None)
-        
-        open_script_entity_id = config.pop(CONF_OPEN_SCRIPT_ENTITY_ID, None)
-        close_script_entity_id = config.pop(CONF_CLOSE_SCRIPT_ENTITY_ID, None)
-        stop_script_entity_id = config.pop(CONF_STOP_SCRIPT_ENTITY_ID, None)
-        
-        tilt_open_script_entity_id = config.pop(CONF_TILT_OPEN_SCRIPT_ENTITY_ID, None)
-        tilt_close_script_entity_id = config.pop(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID, None)
-        tilt_stop_script_entity_id = config.pop(CONF_TILT_STOP_SCRIPT_ENTITY_ID, None)
 
-        cover_entity_id = config.pop(CONF_COVER_ENTITY_ID, None)
-        
-        device = CoverTimeBased(device_id,
-                                name,
-                                travel_time_down,
-                                travel_time_up,
-                                tilting_time_down,
-                                tilting_time_up,
-                                open_script_entity_id,
-                                close_script_entity_id,
-                                stop_script_entity_id,
-                                tilt_open_script_entity_id,
-                                tilt_close_script_entity_id,
-                                tilt_stop_script_entity_id,
-                                cover_entity_id,
-                                send_stop_at_ends,
-                                always_confident,
-                                block_tilt_if_open,
-                                tilt_only_when_closed,
-                                device_class,
-                                availability_template)
-        devices.append(device)
+    if CONF_DEVICES not in domain_config:
+        _LOGGER.error("No '%s' key found in domain_config: %s", CONF_DEVICES, domain_config)
+        return devices
+
+    _LOGGER.debug("Found %d device(s) to configure", len(domain_config[CONF_DEVICES]))
+
+    for device_id, config in domain_config[CONF_DEVICES].items():
+        _LOGGER.debug("Processing device '%s' with config keys: %s", device_id, list(config.keys()))
+
+        # Safe extraction with defaults and logging
+        name = config.get(CONF_NAME, device_id)
+        device_class = config.get(CONF_DEVICE_CLASS, DEFAULT_DEVICE_CLASS)
+        travel_time_down = config.get(CONF_TRAVELLING_TIME_DOWN, DEFAULT_TRAVEL_TIME)
+        travel_time_up = config.get(CONF_TRAVELLING_TIME_UP, DEFAULT_TRAVEL_TIME)
+
+        tilting_time_down = config.get(CONF_TILTING_TIME_DOWN, DEFAULT_TILT_TIME)
+        tilting_time_up = config.get(CONF_TILTING_TIME_UP, DEFAULT_TILT_TIME)
+
+        send_stop_at_ends = config.get(CONF_SEND_STOP_AT_ENDS, DEFAULT_SEND_STOP_AT_ENDS)
+        always_confident = config.get(CONF_ALWAYS_CONFIDENT, DEFAULT_ALWAYS_CONFIDENT)
+        block_tilt_if_open = config.get(CONF_BLOCK_TILT_IF_OPEN, DEFAULT_BLOCK_TILT_IF_OPEN)
+        tilt_only_when_closed = config.get(CONF_TILT_ONLY_WHEN_CLOSED, DEFAULT_TILT_ONLY_WHEN_CLOSED)
+        availability_template = config.get(CONF_AVAILABILITY_TEMPLATE)
+
+        open_script_entity_id = config.get(CONF_OPEN_SCRIPT_ENTITY_ID)
+        close_script_entity_id = config.get(CONF_CLOSE_SCRIPT_ENTITY_ID)
+        stop_script_entity_id = config.get(CONF_STOP_SCRIPT_ENTITY_ID)
+
+        tilt_open_script_entity_id = config.get(CONF_TILT_OPEN_SCRIPT_ENTITY_ID)
+        tilt_close_script_entity_id = config.get(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID)
+        tilt_stop_script_entity_id = config.get(CONF_TILT_STOP_SCRIPT_ENTITY_ID)
+
+        cover_entity_id = config.get(CONF_COVER_ENTITY_ID)
+
+        _LOGGER.debug("Device '%s': name=%s, scripts=[%s,%s,%s], cover_entity=%s",
+                      device_id, name, open_script_entity_id, close_script_entity_id,
+                      stop_script_entity_id, cover_entity_id)
+
+        # Validate configuration mode
+        has_scripts = all([open_script_entity_id, close_script_entity_id, stop_script_entity_id])
+        if cover_entity_id and has_scripts:
+            _LOGGER.warning("Device '%s' has both cover_entity_id and scripts defined; using scripts", device_id)
+        elif not cover_entity_id and not has_scripts:
+            _LOGGER.error("Device '%s' missing required config: need either cover_entity_id OR all three scripts (open/close/stop). Skipping.", device_id)
+            continue
+
+        _LOGGER.debug("Creating CoverTimeBased device '%s'", device_id)
+        try:
+            device = CoverTimeBased(device_id,
+                                    name,
+                                    travel_time_down,
+                                    travel_time_up,
+                                    tilting_time_down,
+                                    tilting_time_up,
+                                    open_script_entity_id,
+                                    close_script_entity_id,
+                                    stop_script_entity_id,
+                                    tilt_open_script_entity_id,
+                                    tilt_close_script_entity_id,
+                                    tilt_stop_script_entity_id,
+                                    cover_entity_id,
+                                    send_stop_at_ends,
+                                    always_confident,
+                                    block_tilt_if_open,
+                                    tilt_only_when_closed,
+                                    device_class,
+                                    availability_template)
+            devices.append(device)
+            _LOGGER.info("Successfully created device '%s' (%s)", device_id, name)
+        except Exception as ex:
+            _LOGGER.error("Failed to create device '%s': %s", device_id, ex, exc_info=True)
+            continue
+
+    _LOGGER.info("devices_from_config completed: created %d device(s)", len(devices))
     return devices
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    async_add_entities(devices_from_config(config))
+    """Set up the cover platform."""
+    _LOGGER.info("Starting async_setup_platform for cover_rf_time_based")
+    _LOGGER.debug("Config keys: %s", list(config.keys()) if config else "None")
+
+    try:
+        devices = devices_from_config(config)
+        _LOGGER.info("Adding %d entities to Home Assistant", len(devices))
+        async_add_entities(devices)
+    except Exception as ex:
+        _LOGGER.error("Failed to setup platform: %s", ex, exc_info=True)
+        return False
 
     platform = entity_platform.current_platform.get()
     
+    _LOGGER.debug("Registering custom services")
     platform.async_register_entity_service(
         "set_known_position",
         {
@@ -210,6 +253,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         },
         "async_send_command",
     )
+
+    _LOGGER.info("cover_rf_time_based platform setup completed successfully")
+    return True
 
 
 class CoverTimeBased(CoverEntity, RestoreEntity):

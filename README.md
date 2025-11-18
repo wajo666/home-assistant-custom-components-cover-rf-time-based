@@ -49,7 +49,6 @@ Built-in guard prevents duplicate entity creation during:
 ### ✅ Backward Compatibility
 **No configuration changes required!** All existing YAML configurations work identically.
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Installation
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)

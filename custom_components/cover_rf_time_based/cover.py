@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Optional
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -100,20 +101,20 @@ class DeviceConfig:
     always_confident: bool
     block_tilt_if_open: bool
     tilt_only_when_closed: bool
-    availability_template: any | None
+    availability_template: Optional[any]
 
 @dataclass(slots=True)
 class ScriptsConfig:
-    open_script: str | None
-    close_script: str | None
-    stop_script: str | None
-    tilt_open_script: str | None
-    tilt_close_script: str | None
-    tilt_stop_script: str | None
+    open_script: Optional[str]
+    close_script: Optional[str]
+    stop_script: Optional[str]
+    tilt_open_script: Optional[str]
+    tilt_close_script: Optional[str]
+    tilt_stop_script: Optional[str]
 
 @dataclass(slots=True)
 class WrapperConfig:
-    cover_entity_id: str | None
+    cover_entity_id: Optional[str]
 
 # Schemas (minimal reuse for YAML fallback)
 BASE_DEVICE_SCHEMA = vol.Schema(
@@ -305,12 +306,16 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             return
         tpl.hass = self.hass
         @callback
-        def _avail(_):
+        def _template_updated(event, updates):
             self.async_write_ha_state()
         try:
-            self._unsub_availability_tracker = tpl.async_render_to_info(self.hass, _avail)
+            from homeassistant.helpers.event import async_track_template_result, TrackTemplate
+            track_tpl = TrackTemplate(tpl, None)
+            self._unsub_availability_tracker = async_track_template_result(
+                self.hass, [track_tpl], _template_updated
+            ).async_remove
         except Exception as ex:
-            _LOGGER.error("%s: availability template failed: %s", self._name, ex)
+            _LOGGER.error("%s: availability template setup failed: %s", self._name, ex, exc_info=True)
 
     @property
     def is_tilting(self):

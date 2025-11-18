@@ -1,7 +1,10 @@
 {
   "domain": "cover_rf_time_based",
   "name": "Cover Time Based (script/entity)",
+  "version": "2.0.0",
   "documentation": "https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based",
   "iot_class": "assumed_state",
-  "codeowners": ["@davidramosweb", "@nagyrobi", "@Alfiegerner", "@wajo666"]
+  "codeowners": ["@davidramosweb", "@nagyrobi", "@Alfiegerner", "@wajo666"],
+  "requirements": [],
+  "config_flow": false
 }

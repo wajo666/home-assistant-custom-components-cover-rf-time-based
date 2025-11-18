@@ -34,6 +34,7 @@ ATTR_POSITION_TYPE_TARGET = 'target'
 ATTR_COMMAND = 'command'
 ATTR_DEVICE_ID = 'device_id'
 ATTR_TILT_POSITION = 'tilt_position'
+ATTR_POSITION = 'position'
 
 # Defaults
 DEFAULT_TRAVEL_TIME = 25
@@ -50,4 +51,3 @@ SERVICE_SEND_COMMAND = 'send_command'
 
 # Timing
 TRAVEL_TIME_INTERVAL = timedelta(milliseconds=100)
-

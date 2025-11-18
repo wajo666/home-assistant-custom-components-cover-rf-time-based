@@ -295,6 +295,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._processing_known_position = False
         self._target_position = 0
         self._target_tilt_position = 0
+        self._stopping = False  # Flag to prevent duplicate stop commands
 
         self._travel_time_down = travel_time_down
         self._travel_time_up = travel_time_up
@@ -663,14 +664,23 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
+        # Prevent race condition with auto_stop_if_necessary
+        if self._stopping:
+            _LOGGER.debug("%s: Stop already in progress, ignoring duplicate call", self.name)
+            return
+
         # Only send stop command if cover is actually moving
         if not self.tc.is_traveling():
             _LOGGER.debug("%s: Stop command ignored - cover is not traveling", self.name)
             return
 
-        self.tc.stop()
-        await self._handle_command(SERVICE_STOP_COVER)
-        self.async_write_ha_state()
+        self._stopping = True
+        try:
+            self.tc.stop()
+            await self._handle_command(SERVICE_STOP_COVER)
+            self.async_write_ha_state()
+        finally:
+            self._stopping = False
 
     async def async_stop_cover_tilt(self, **kwargs):
         """Stop the cover tilt."""
@@ -782,8 +792,14 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             _LOGGER.warning('%s: Unknown or unsupported command: %s', self._name, command)
 
     async def auto_stop_if_necessary(self):
+        """Check if cover reached target position and send stop if needed."""
         self._processing_known_position = False
         
+        # Don't interfere if manual stop is in progress
+        if self._stopping:
+            _LOGGER.debug("%s: Manual stop in progress, auto_stop skipped", self.name)
+            return
+
         position_reached = self.tc.position_reached()
         tilt_reached = self._has_tilt and self.tilt_tc.position_reached()
         
@@ -796,7 +812,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             is_intermediate_stop = target_position > 0 and target_position < 100
 
             if is_intermediate_stop or self._send_stop_at_ends:
-                # FIX: Use _handle_command 
                 await self._handle_command(SERVICE_STOP_COVER)
                 stop_called = True
             

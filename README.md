@@ -75,7 +75,7 @@ cover:
         tilt_only_when_closed: False #optional (defaults to False)
 ```
   
-**OR**:  
+**OR** using existing cover entity:  
   
 ```yaml
 cover:
@@ -91,6 +91,24 @@ cover:
         device_class: curtain #optional
         availability_template: "{{ not (is_state('cover.myroom', 'unavailable') or is_state('cover.myroom', 'unknown')) }}" #optional
 ```
+
+#### Configuration with TILT support using existing cover entity:
+```yaml
+cover:
+  - platform: cover_rf_time_based
+    devices:
+      my_room_blinds_time_based:
+        name: My Room Blinds
+        travelling_time_up: 36
+        travelling_time_down: 34
+        tilting_time_up: 1.5 #optional
+        tilting_time_down: 1.5 #optional
+        cover_entity_id: cover.myroom_blinds
+        tilt_only_when_closed: False #optional (defaults to False)
+```
+
+**Note**: When using `cover_entity_id`, all cover commands (including tilt commands if configured) are forwarded to the specified cover entity. The time-based component adds position tracking and tilt position tracking capabilities on top of the existing cover entity. This is useful when you have a cover integration that doesn't provide position feedback or tilt control, and you want to add these features.
+
 All mandatory settings self-explanatory. 
 
 Optional settings:
@@ -295,12 +313,13 @@ The cover entity provides these tilt-related attributes:
 - `tilt_only_when_closed` - shows the configured restriction mode
 - `tilting_time_up` / `tilting_time_down` - configured tilt travel times
 
-### Services to set position or action without triggering cover movement
+### Custom Services
 
-This component provides 2 services:
+This component provides 3 custom services:
 
-1.  ```cover_rf_time_based.set_known_position``` lets you specify the position of the cover if you have other sources of information, i.e. sensors. It's useful as the cover may have changed position outside of HA's knowledge, and also to allow a confirmed position to make the arrow buttons display more appropriately.
-1.  ```cover_rf_time_based.set_known_action``` is for instances when an action is caught in the real world but not process in HA, .e.g. an RF bridge detects a ```stop``` action that we want to input into HA without calling the stop command.
+1.  ```cover_rf_time_based.set_known_position``` lets you specify the position of the cover (and tilt position if applicable) if you have other sources of information, i.e. sensors. It's useful as the cover may have changed position outside of HA's knowledge, and also to allow a confirmed position to make the arrow buttons display more appropriately.
+1.  ```cover_rf_time_based.set_known_action``` is for instances when an action is caught in the real world but not processed in HA, e.g. an RF bridge detects a ```stop``` action that we want to input into HA without calling the stop command.
+1.  ```cover_rf_time_based.send_command``` allows you to send specific cover commands programmatically, including tilt commands if supported.
 
 
 #### ```cover_rf_time_based.set_known_position```
@@ -398,6 +417,49 @@ Example:
     service: cover_rf_time_based.set_known_action
 ```
 In this instance we have caught a stop signal from the RF bridge and want to update HA cover without triggering another stop action.
+
+#### ```cover_rf_time_based.send_command```
+This service allows you to send specific cover commands programmatically. In addition to ```entity_id```, it takes the ```command``` parameter.
+
+Supported commands:
+- ```open_cover``` - opens the main cover
+- ```close_cover``` - closes the main cover
+- ```stop_cover``` - stops the main cover
+- ```open_cover_tilt``` - opens the tilt (if tilt support is configured)
+- ```close_cover_tilt``` - closes the tilt (if tilt support is configured)
+- ```stop_cover_tilt``` - stops the tilt (if tilt support is configured)
+
+Example usage:
+
+```yaml
+- id: 'custom_tilt_open'
+  alias: 'Cover: Open tilt via automation'
+  trigger:
+  - platform: sun
+    event: sunrise
+  action:
+  - data:
+      entity_id: cover.living_room_blinds
+      command: open_cover_tilt
+    service: cover_rf_time_based.send_command
+```
+
+Example with conditional command:
+
+```yaml
+- id: 'dynamic_cover_command'
+  alias: 'Cover: Send dynamic command'
+  trigger:
+  - platform: state
+    entity_id: input_select.cover_command
+  action:
+  - data:
+      entity_id: cover.my_room_cover
+      command: "{{ states('input_select.cover_command') }}"
+    service: cover_rf_time_based.send_command
+```
+
+This service is particularly useful when you want to trigger specific cover actions from automations or scripts in a programmatic way.
 
 ### Icon customization
   

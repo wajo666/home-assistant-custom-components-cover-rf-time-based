@@ -76,6 +76,7 @@ cover:
         stop_script_entity_id: script.rf_myroom_cover_stop
         open_script_entity_id: script.rf_myroom_cover_up
         send_stop_at_ends: False #optional
+        command_delay: 0 #optional (time in seconds, can be float like 0.5)
         always_confident: False #optional
         device_class: garage #optional
         availability_template: "{{ is_state('binary_sensor.rf_bridge_status', 'on') }}" #optional
@@ -139,6 +140,10 @@ All mandatory settings self-explanatory.
 
 Optional settings:
 - `send_stop_at_ends` defaults to `False`. If set to `True`, the Stop script will be run after the cover reaches to 0 or 100 (closes or opens completely). This is for people who use interlocked relays in the scripts to drive the covers, which need to be released when the covers reach the end positions.
+- `command_delay` defaults to `0` (seconds). Specifies the delay between sending a command and the actual execution. This accounts for RF signal transmission delays, motor startup time, or any other delays in your system. **Important**: This delay applies to **both START and STOP commands**. For example, if set to `0.5`:
+  - OPEN command sent at t=0s → Motor starts at t=0.5s
+  - For 30% position (3s travel): STOP sent at t=3.0s → Motor stops at t=3.5s (exactly at 30%)
+  - This ensures the motor stops precisely at the target position without overshooting.
 - `always_confident` defaults to `False`. If set to `True`, the calculated state will always be assumed to be accurate. This mainly affects UI components - for example, if the cover is fully opened, the open button will be disabled. Make sure to [set](#cover_rf_time_basedset_known_position) the current state after first setup and only use this entity to control the covers. Not recommended to be `True` for RF-based covers.
 - `device_class` defaults to `shutter` if not specified. See the docs for availale [cover device classes](http://dev-docs.home-assistant.io/en/master/api/components.html#homeassistant.components.cover.CoverDeviceClass).
 - `availability_template` if not specified will make the cover always available. You can use a template returning `True` or `False` in order to toggle availability of the cover based on other entities. Useful to link with the connection status of your RF Bridge or relays device.

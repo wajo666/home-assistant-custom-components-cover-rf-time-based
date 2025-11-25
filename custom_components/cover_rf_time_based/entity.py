@@ -36,6 +36,7 @@ from .const import (
     CONF_TRAVELLING_TIME_DOWN,
     CONF_TRAVELLING_TIME_UP,
     CONF_BLOCK_TILT_IF_OPEN,
+    CONF_COMMAND_DELAY,
 )
 from .models import DeviceConfig, ScriptsConfig, WrapperConfig
 from .travelcalculator import TravelCalculator, TravelStatus
@@ -75,8 +76,9 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             self._tilt_close_script_entity_id,
             self._tilt_stop_script_entity_id,
         ])
-        self.tc = TravelCalculator(config.travel_time_down, config.travel_time_up)
-        self.tilt_tc = TravelCalculator(config.tilting_time_down, config.tilting_time_up)
+        self._command_delay = config.command_delay
+        self.tc = TravelCalculator(config.travel_time_down, config.travel_time_up, config.command_delay)
+        self.tilt_tc = TravelCalculator(config.tilting_time_down, config.tilting_time_up, config.command_delay)
         self._unsubscribe_auto_update = None
         self._unsub_availability_tracker = None
         self.hass = None
@@ -166,6 +168,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         attr[CONF_TRAVELLING_TIME_DOWN] = self._config.travel_time_down
         attr[CONF_TRAVELLING_TIME_UP] = self._config.travel_time_up
         attr[CONF_BLOCK_TILT_IF_OPEN] = self._config.block_tilt_if_open
+        attr[CONF_COMMAND_DELAY] = self._config.command_delay
         return attr
 
     async def async_added_to_hass(self):
@@ -449,9 +452,16 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         return False
 
     async def _auto_stop_tilt(self, main_stop_done: bool):
+        target = self.tilt_tc.travel_to_position
         self.tilt_tc.stop()
+        intermediate = target not in (0, 100)
         separate = self._tilt_stop_script_entity_id is not None
-        if separate or not main_stop_done:
+        # Send stop command if:
+        # 1. It's an intermediate position, OR
+        # 2. send_stop_at_ends is True, OR
+        # 3. Tilt has separate stop script and main stop wasn't sent
+        should_send_stop = intermediate or self._send_stop_at_ends or (separate and not main_stop_done)
+        if should_send_stop:
             await self._handle_command(SERVICE_STOP_COVER_TILT)
 
     async def _handle_command(self, command, *args, **kwargs):

@@ -25,6 +25,7 @@ from .const import (
     CONF_TILT_OPEN_SCRIPT_ENTITY_ID,
     CONF_TILT_CLOSE_SCRIPT_ENTITY_ID,
     CONF_TILT_STOP_SCRIPT_ENTITY_ID,
+    CONF_COMMAND_DELAY,
     DEFAULT_DEVICE_CLASS,
     DEFAULT_TRAVEL_TIME,
     DEFAULT_TILT_TIME,
@@ -32,6 +33,7 @@ from .const import (
     DEFAULT_ALWAYS_CONFIDENT,
     DEFAULT_BLOCK_TILT_IF_OPEN,
     DEFAULT_TILT_ONLY_WHEN_CLOSED,
+    DEFAULT_COMMAND_DELAY,
 )
 from .models import DeviceConfig, ScriptsConfig, WrapperConfig
 from .entity import CoverTimeBased
@@ -87,6 +89,7 @@ def devices_from_config(domain_config):
             block_tilt_if_open=c.get(CONF_BLOCK_TILT_IF_OPEN, DEFAULT_BLOCK_TILT_IF_OPEN),
             tilt_only_when_closed=c.get(CONF_TILT_ONLY_WHEN_CLOSED, DEFAULT_TILT_ONLY_WHEN_CLOSED),
             availability_template=c.get(CONF_AVAILABILITY_TEMPLATE),
+            command_delay=c.get(CONF_COMMAND_DELAY, DEFAULT_COMMAND_DELAY),
         )
         scripts = ScriptsConfig(
             open_script=c.get(CONF_OPEN_SCRIPT_ENTITY_ID),

@@ -15,6 +15,7 @@ class DeviceConfig:
     block_tilt_if_open: bool
     tilt_only_when_closed: bool
     availability_template: Optional[Any]
+    command_delay: float
 
 @dataclass(slots=True)
 class ScriptsConfig:

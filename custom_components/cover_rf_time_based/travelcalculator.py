@@ -16,7 +16,7 @@ class TravelStatus(Enum):
 
 class TravelCalculator:
 
-    def __init__(self, travel_time_down, travel_time_up):
+    def __init__(self, travel_time_down, travel_time_up, command_delay=0):
         self.position_type = PositionType.UNKNOWN
         self.last_known_position = 0
         self.travel_to_position = 0
@@ -27,6 +27,7 @@ class TravelCalculator:
         self.position_closed = 0
         self.position_open = 100
         self.time_set_from_outside = None
+        self.command_delay = command_delay
 
     def start_travel(self, position):
         self.travel_to_position = position
@@ -98,7 +99,39 @@ class TravelCalculator:
         return self.current_position() == self.position_closed
 
     def position_reached(self):
-        return self.current_position() == self.travel_to_position and self.is_traveling()
+        """
+        Check if target position is reached (accounting for command_delay).
+        Returns True when we should send the STOP command.
+
+        With command_delay, the timeline is:
+        - t=0: Command sent (OPEN/CLOSE)
+        - t=command_delay: Motor actually starts moving
+        - t=command_delay+travel_time: Motor reaches target position
+
+        For STOP command:
+        - We send STOP at t=travel_time
+        - STOP takes effect at t=travel_time+command_delay
+        - Motor stops exactly at target (after traveling for travel_time seconds)
+
+        Therefore, we check: elapsed_time >= travel_time
+        (NOT effective_travel_time, because STOP also needs command_delay to take effect)
+        """
+        if not self.is_traveling():
+            return False
+
+        relative_position = self.travel_to_position - self.last_known_position
+        if self.last_known_position == self.travel_to_position:
+            return True
+
+        travel_time = self._calculate_travel_time(relative_position)
+        if travel_time == 0:
+            return True
+
+        # Send STOP when elapsed time equals the needed travel time
+        # This ensures STOP takes effect exactly when motor reaches the target
+        elapsed_time = self.current_time() - self.travel_started_time
+
+        return elapsed_time >= travel_time
 
     def calculate_position(self):
         if not self.is_traveling():
@@ -110,16 +143,18 @@ class TravelCalculator:
         travel_time_full = self.travel_time_up if self.travel_direction == TravelStatus.DIRECTION_UP else self.travel_time_down
         travel_range = self.position_open - self.position_closed
         
-        travel_duration = self.current_time() - self.travel_started_time
-        
+        # Account for command_delay: subtract delay from elapsed time
+        elapsed_time = self.current_time() - self.travel_started_time
+        effective_travel_duration = max(0, elapsed_time - self.command_delay)
+
         if self.travel_direction == TravelStatus.DIRECTION_UP:
-            position_change = (travel_duration / travel_time_full) * travel_range
+            position_change = (effective_travel_duration / travel_time_full) * travel_range
             position = self.last_known_position + position_change
             if position > self.travel_to_position:
                 return self.travel_to_position
             return int(position)
         else:
-            position_change = (travel_duration / travel_time_full) * travel_range
+            position_change = (effective_travel_duration / travel_time_full) * travel_range
             position = self.last_known_position - position_change
             if position < self.travel_to_position:
                 return self.travel_to_position

@@ -25,6 +25,7 @@ CONF_TILT_CLOSE_SCRIPT_ENTITY_ID = 'tilt_close_script_entity_id'
 CONF_TILT_STOP_SCRIPT_ENTITY_ID = 'tilt_stop_script_entity_id'
 CONF_COVER_ENTITY_ID = 'cover_entity_id'
 CONF_AVAILABILITY_TEMPLATE = 'availability_template'
+CONF_COMMAND_DELAY = 'command_delay'
 
 # Attributes
 ATTR_UNCONFIRMED_STATE = 'unconfirmed_state'
@@ -46,6 +47,7 @@ DEFAULT_ALWAYS_CONFIDENT = False
 DEFAULT_BLOCK_TILT_IF_OPEN = False
 DEFAULT_TILT_ONLY_WHEN_CLOSED = False
 DEFAULT_DEVICE_CLASS = 'shutter'
+DEFAULT_COMMAND_DELAY = 0
 
 # Services
 SERVICE_SET_KNOWN_ACTION = 'set_known_action'

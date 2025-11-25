@@ -29,7 +29,17 @@ htmlcov/
 *.tmp
 .backup
 
+# Test scripts (development only)
+test_*.py
+verify_*.py
+final_verification.py
+
 # Release helper files (not needed in repo)
 TODO_RELEASE.md
 RELEASE_NOTES_*.md
+GITHUB_RELEASE_TEMPLATE.md
+PRE_RELEASE_CHECKLIST.md
+START_HERE.md
+release.ps1
+quick-release.sh
 

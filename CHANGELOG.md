@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-11-25
+
+### Added
+- **command_delay** parameter: Specifies delay (in seconds) between sending a command and the actual start of cover movement
+  - Accounts for RF signal transmission delays, motor startup time, or other system delays
+  - Default value: 0 (no delay)
+  - Supports float values (e.g., 0.5 for half-second delay)
+  - Applied to both main cover and tilt movement calculations
+  - **Critical**: Also accounts for STOP command delay - STOP is sent early so it takes effect exactly when motor reaches target
+  - Visible in entity attributes for debugging
+  - **How it works**:
+    - Command sent at t=0
+    - Motor starts at t=command_delay
+    - For a 3-second travel: STOP sent at t=3.0, motor stops at t=3.5 (exactly at target)
+
+### Fixed
+- **Tilt auto-stop** now respects `send_stop_at_ends` setting
+  - Previously, tilt would stop prematurely regardless of `send_stop_at_ends` value
+  - Now follows same logic as main cover: sends stop command only for intermediate positions OR when `send_stop_at_ends` is True
+  - Ensures tilt reaches target position (0 or 100) when `send_stop_at_ends` is False
+- **STOP command timing** with command_delay
+  - STOP is now sent at the correct time to account for the delay in STOP command taking effect
+  - Prevents motor from overshooting target position due to STOP command delay
+
 ## [2.0.1] - 2025-11-19
 
 ### Fixed

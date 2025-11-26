@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-26
+
+### Added
+- **UI Configuration Support**: Configure covers through Home Assistant UI
+  - New `config_flow.py` with full config flow implementation
+  - Support for both script-based and wrapper modes
+  - **Hybrid Mode**: Combine wrapper cover with tilt scripts
+    - Use existing cover entity for main movement (open/close/stop)
+    - Add custom tilt functionality via scripts
+    - Perfect for adding tilt to covers that don't support it
+  - Options flow for easy configuration updates without restart
+  - English and Slovak translations (`en.json`, `sk.json`)
+  - Configuration validation with helpful error messages
+  - **Availability Template Support in UI**: Full support for `availability_template` via template selector
+    - Template editor with autocomplete and entity picker
+    - Live validation of templates
+    - Available in both initial setup and options flow
+    - Supports all template syntax for controlling cover availability
+  
+- **Migration Support**: Easy migration from YAML to UI configuration
+  - Comprehensive migration guide (`MIGRATION.md`)
+  - Both YAML and UI configurations can coexist
+  - Seamless transition without data loss
+  
+- **Enhanced Setup**:
+  - `async_setup_entry()` in `__init__.py` for config flow entries
+  - `async_unload_entry()` for proper cleanup
+  - `async_reload_entry()` for live configuration updates
+  - Updated manifest with `config_flow: true`
+  - Template string to Template object conversion in UI config
+
+### Changed
+- README.md updated with UI configuration instructions
+- Installation steps simplified (UI config is now recommended)
+- DOMAIN constant moved to `const.py` for better organization
+- `availability_template` now fully supported in UI (previously YAML-only)
+- Improved command handling logic to support hybrid wrapper + tilt scripts mode
+
+### Fixed
+- YAML configuration now loads correctly on Home Assistant startup
+- Removed `integration_type: "device"` from manifest to allow YAML platform loading alongside config flow
+- Added proper domain initialization in `async_setup` to ensure YAML platform discovery
+- Enhanced logging for better YAML configuration troubleshooting
+- **Integration now visible in UI with YAML-only config**: Automatic import entry creation makes integration appear in "Devices & Services" even without manually adding it via UI first
+
+### Documentation
+- New `MIGRATION.md` with step-by-step migration guide
+- Updated README.md with UI configuration section and HACS installation instructions
+- Configuration field descriptions in UI
+- Availability template examples and use cases in migration guide
+- Hybrid mode documentation with real-world examples (Zigbee + RF tilt)
+- Command delay explained with timing diagrams
+- Clarified that YAML and UI configurations can coexist
+
 ## [2.0.2] - 2025-11-25
 
 ### Added

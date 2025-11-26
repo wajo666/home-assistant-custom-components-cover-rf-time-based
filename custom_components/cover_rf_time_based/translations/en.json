@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose Configuration Mode",
+        "description": "Select how you want to configure the cover.",
+        "data": {
+          "mode": "Configuration Mode"
+        }
+      },
+      "device_config": {
+        "title": "Configure Cover",
+        "description": "Set up your time-based cover configuration.",
+        "data": {
+          "name": "Name",
+          "device_class": "Device Class",
+          "travelling_time_down": "Travel Time Down",
+          "travelling_time_up": "Travel Time Up",
+          "tilting_time_down": "Tilt Time Down",
+          "tilting_time_up": "Tilt Time Up",
+          "command_delay": "Command Delay",
+          "send_stop_at_ends": "Send Stop at Ends",
+          "always_confident": "Always Confident",
+          "tilt_only_when_closed": "Tilt Only When Closed",
+          "open_script_entity_id": "Open Script",
+          "close_script_entity_id": "Close Script",
+          "stop_script_entity_id": "Stop Script",
+          "tilt_open_script_entity_id": "Tilt Open Script (optional)",
+          "tilt_close_script_entity_id": "Tilt Close Script (optional)",
+          "tilt_stop_script_entity_id": "Tilt Stop Script (optional)",
+          "cover_entity_id": "Cover Entity",
+          "availability_template": "Availability Template (optional)"
+        }
+      }
+    },
+    "error": {
+      "missing_scripts": "All three main scripts (open, close, stop) are required for script mode.",
+      "missing_cover_entity": "Cover entity is required for wrapper mode."
+    },
+    "abort": {
+      "already_configured": "A cover with this name is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure Cover Options",
+        "description": "Update your cover settings.",
+        "data": {
+          "travelling_time_down": "Travel Time Down",
+          "travelling_time_up": "Travel Time Up",
+          "tilting_time_down": "Tilt Time Down",
+          "tilting_time_up": "Tilt Time Up",
+          "command_delay": "Command Delay",
+          "send_stop_at_ends": "Send Stop at Ends",
+          "always_confident": "Always Confident",
+          "tilt_only_when_closed": "Tilt Only When Closed",
+          "open_script_entity_id": "Open Script",
+          "close_script_entity_id": "Close Script",
+          "stop_script_entity_id": "Stop Script",
+          "tilt_open_script_entity_id": "Tilt Open Script (optional)",
+          "tilt_close_script_entity_id": "Tilt Close Script (optional)",
+          "tilt_stop_script_entity_id": "Tilt Stop Script (optional)",
+          "cover_entity_id": "Cover Entity",
+          "availability_template": "Availability Template (optional)"
+        }
+      }
+    }
+  }
+}
+

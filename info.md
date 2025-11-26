@@ -1,4 +1,4 @@
-# Cover Time Based script/entity
+# Cover Time Based (script/entity)
 
 With this component you can add a time-based cover with optional **TILT support**. You can either set triggering scripts to open, close and stop the cover, or use an existing cover entity provided by another integration. Position (and tilt position if configured) is calculated based on the fraction of time spent by the cover travelling up or down. You can set position from within Home Assistant using service calls. When you use this component, you can forget about the cover's original remote controllers or switches, because there's no feedback from the cover about its real state, state is assumed based on the last command sent from Home Assistant. There are custom services available where you can update the real state of the cover (including tilt position) based on external sensors if you want to.
 

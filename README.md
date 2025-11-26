@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/wajo666/home-assistant-custom-components-cover-rf-time-based.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/graphs/commit-activity)
 
-> **🎉 Version 2.0 Released!** - Modular architecture with duplicate entity protection and enhanced maintainability.
+> **🎉 Version 2.1 Released!** - Full UI configuration support with template editor, hybrid wrapper mode, and HACS installation!
 
 Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based), modified for native cover entities, covers triggered by RF commands, or any other unidirectional methods.
 
@@ -51,12 +51,205 @@ Built-in guard prevents duplicate entity creation during:
 
 
 ## Installation
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
-* Install using HACS, or manually: copy all files in custom_components/cover_rf_time_based to your <config directory>/custom_components/cover_rf_time_based/ directory.
-* Restart Home-Assistant.
-* Create the required scripts in scripts.yaml.
-* Add the configuration to your configuration.yaml.
-* Restart Home-Assistant again.
+
+### Option 1: HACS (Recommended)
+
+This integration is available in the default HACS repository.
+
+1. **Install HACS** (if not already installed)
+   - Follow the [HACS installation guide](https://hacs.xyz/docs/setup/download)
+
+2. **Add the integration via HACS**
+   - Open Home Assistant
+   - Go to **HACS** → **Integrations**
+   - Click **+ EXPLORE & DOWNLOAD REPOSITORIES**
+   - Search for **"Cover Time Based"** or **"Cover RF Time Based"**
+   - Click on the integration
+   - Click **DOWNLOAD**
+   - Select the latest version
+   - Click **DOWNLOAD** again
+
+3. **Restart Home Assistant**
+   - Go to **Settings** → **System** → **Restart**
+   - Or use the command: `homeassistant.restart`
+
+4. **Configure the integration**
+   - See [Configuration](#configuration) section below
+
+**Benefits of HACS installation:**
+- ✅ Easy updates - get notified of new versions
+- ✅ One-click update process
+- ✅ Automatic dependency management
+- ✅ Integration shows up in HACS integrations list
+
+### Option 2: Manual Installation
+
+For advanced users who don't use HACS:
+
+1. **Download the latest release** from [GitHub Releases](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
+
+2. **Copy files to Home Assistant**
+   - Extract and copy the `custom_components/cover_rf_time_based` folder to your `<config>/custom_components/` directory
+   - Full path: `<config>/custom_components/cover_rf_time_based/`
+
+3. **Restart Home Assistant**
+
+4. **Add integration via UI** (see step 4 in HACS method above)
+
+## Configuration
+
+You can configure this integration in **two ways**:
+
+### Option A: UI Configuration (Recommended ⭐)
+
+The easiest way to set up covers - no YAML editing required!
+
+1. Go to **Settings** → **Devices & Services**
+2. Click **+ ADD INTEGRATION**
+3. Search for **"Cover Time Based"**
+4. Choose your mode:
+   - **Script-based**: Use custom scripts (RF, MQTT, relays, etc.)
+   - **Wrapper**: Extend an existing cover entity
+5. Fill in the configuration form
+6. Click **Submit**
+
+**Note:** If you have YAML configurations, the integration will **automatically appear** in "Devices & Services" with a "YAML Configuration" entry. You don't need to manually add it first!
+
+**Configuration Options:**
+- **Name**: Entity name (e.g., "Bedroom Blinds")
+- **Device Class**: Type of cover (shutter, blind, curtain, etc.)
+- **Travel Times**: How long it takes to fully open/close (seconds)
+- **Tilt Times**: How long it takes to fully tilt (if applicable)
+- **Command Delay**: Delay between command and motor start (accounts for RF/motor delays)
+- **Scripts**: Scripts for open/close/stop (and optionally tilt)
+- **Availability Template**: Template to control when cover is available (optional)
+- **Options**: Send stop at ends, always confident, tilt restrictions
+
+**Hybrid Mode Example:**
+Want to add tilt to a cover that doesn't support it?
+1. Choose **Wrapper** mode
+2. Select your existing cover (e.g., `cover.zigbee_blinds`)
+3. Add **Tilt Scripts** for custom tilt control
+4. Result: Main movement from Zigbee, tilt from your RF scripts!
+
+See [MIGRATION.md](MIGRATION.md) for detailed UI configuration guide.
+
+### Option B: YAML Configuration (Legacy)
+
+You can also configure covers via YAML. Both YAML and UI configurations can coexist!
+
+#### Basic Script-Based Configuration
+   - See [Configuration](#configuration) section below
+
+**Manual installation structure:**
+```
+<config directory>/
+├── configuration.yaml
+└── custom_components/
+    └── cover_rf_time_based/
+        ├── __init__.py
+        ├── config_flow.py
+        ├── const.py
+        ├── cover.py
+        ├── entity.py
+        ├── helpers.py
+        ├── manifest.json
+        ├── models.py
+        ├── services.yaml
+        ├── strings.json
+        ├── travelcalculator.py
+        └── translations/
+            ├── en.json
+            └── sk.json
+```
+
+## Configuration
+
+### UI Configuration (Recommended)
+
+The easiest way to set up covers is through the Home Assistant UI:
+
+1. Go to **Settings** → **Devices & Services**
+2. Click **+ ADD INTEGRATION**
+3. Search for **"Cover Time Based"**
+4. Choose your configuration mode:
+   - **Script-based (recommended)**: Control covers using scripts
+   - **Wrapper**: Enhance an existing cover entity with position/tilt tracking
+   - **Hybrid**: Combine wrapper cover (for main movement) with tilt scripts (for tilt control)
+5. Fill in the configuration form:
+   - Basic settings: name, device class, travel times
+   - Scripts or wrapper entity
+   - Optional: tilt settings, command delay, availability template
+6. Click **Submit**
+
+**Benefits of UI Configuration:**
+- ✅ No YAML editing required
+- ✅ Template editor with autocomplete for availability templates
+- ✅ Live configuration updates (no restart needed)
+- ✅ Immediate validation feedback
+- ✅ Entity picker for easy script/entity selection
+- ✅ Easy to modify later via Options flow
+
+**Available Fields:**
+- **Name**: Cover entity name
+- **Device Class**: Type of cover (shutter, blind, curtain, etc.)
+- **Travel Times**: Time to fully open/close (in seconds)
+- **Tilt Times**: Time to fully tilt slats (optional)
+- **Command Delay**: RF/motor startup delay (optional)
+- **Scripts**: Entity IDs for open/close/stop/tilt operations
+- **Wrapper Entity**: Existing cover entity to enhance (wrapper mode)
+- **Availability Template**: Jinja2 template to control availability (optional)
+- **Behavioral Options**: Send stop at ends, always confident, tilt restrictions
+
+**To modify settings later:**
+1. Go to **Settings** → **Devices & Services**
+2. Find the **Cover Time Based (script/entity)** integration
+3. Click **CONFIGURE**
+4. Update settings and click **Submit**
+5. Changes apply immediately without restart!
+
+### Hybrid Mode: Wrapper + Tilt Scripts
+
+**New in v2.1!** You can now combine wrapper mode with tilt scripts for maximum flexibility:
+
+**Use Case:** You have an existing cover entity that handles open/close/stop, but you want to add custom tilt functionality.
+
+**How it works:**
+- **Main movement** (open, close, stop, position) → Uses the wrapper cover entity
+- **Tilt control** (tilt open, tilt close, tilt stop, tilt position) → Uses your custom scripts
+
+**Configuration Steps:**
+1. Select **"Wrapper (existing cover entity)"** mode
+2. Set **Cover Entity** to your existing cover (e.g., `cover.bedroom_blinds`)
+3. Add your **Tilt Scripts**:
+   - **Tilt Open Script**: `script.bedroom_tilt_open`
+   - **Tilt Close Script**: `script.bedroom_tilt_close`
+   - **Tilt Stop Script**: `script.bedroom_tilt_stop` (optional)
+4. Configure **Tilt Times** (e.g., 1.5 seconds)
+
+**Example Scenario:**
+```
+Existing: cover.bedroom_blinds (no tilt support)
+Goal: Add RF-based tilt control
+
+Solution:
+- Wrapper Entity: cover.bedroom_blinds
+- Tilt Scripts: Custom RF scripts for tilt
+- Result: Main movement uses existing cover, tilt uses RF scripts
+```
+
+**Benefits:**
+- ✅ Keep using your existing cover integration
+- ✅ Add tilt functionality without modifying original integration
+- ✅ Use different control methods (e.g., Zigbee for main, RF for tilt)
+- ✅ Separate timing for main movement vs tilt
+- ✅ Best of both worlds!
+
+### YAML Configuration (Legacy)
+
+You can also configure covers via YAML. See [Migration Guide](MIGRATION.md) for switching from YAML to UI.
 
 ### Usage
 To use this component in your installation, you have to either set RF-sending scripts to open, close and stop the cover (see below), or use an existing cover entity provided by another integration, which is missing the features provided here.
@@ -144,9 +337,29 @@ Optional settings:
   - OPEN command sent at t=0s → Motor starts at t=0.5s
   - For 30% position (3s travel): STOP sent at t=3.0s → Motor stops at t=3.5s (exactly at 30%)
   - This ensures the motor stops precisely at the target position without overshooting.
-- `always_confident` defaults to `False`. If set to `True`, the calculated state will always be assumed to be accurate. This mainly affects UI components - for example, if the cover is fully opened, the open button will be disabled. Make sure to [set](#cover_rf_time_basedset_known_position) the current state after first setup and only use this entity to control the covers. Not recommended to be `True` for RF-based covers.
+- `always_confident` defaults to `False`. **Controls whether Home Assistant treats the cover position as reliable or estimated.**
+  - **`False` (default, recommended)**: Cover has `assumed_state = True`
+    - UI knows the position is an **estimate** (calculated from time)
+    - All buttons (Open/Close/Stop) are **always active**
+    - Cover can be controlled even if position is uncertain
+    - **✅ Use for RF covers** (no feedback from motor)
+    - **✅ Use if external remotes** can change position outside HA
+    - **✅ Recommended for 90% of use cases**
+  - **`True` (use with caution)**: Cover has `assumed_state = False`
+    - UI treats the position as **accurate and reliable**
+    - Buttons **deactivate** based on state (e.g., Open button disabled when fully opened)
+    - **⚠️ Can cause issues** if cover is moved by external controls
+    - **⚠️ Not recommended for RF covers** (no real position feedback)
+    - **⚠️ Only use if:**
+      - You control the cover EXCLUSIVELY through Home Assistant
+      - You NEVER use physical buttons or original remotes
+      - You set correct position with `set_known_position` after HA restarts
+  - **Example problem with `True`**: If cover is at 100% in HA but someone closes it manually, the Open button becomes disabled and you can't open it via UI until you fix the state with `set_known_position` service.
 - `device_class` defaults to `shutter` if not specified. See the docs for availale [cover device classes](http://dev-docs.home-assistant.io/en/master/api/components.html#homeassistant.components.cover.CoverDeviceClass).
-- `availability_template` if not specified will make the cover always available. You can use a template returning `True` or `False` in order to toggle availability of the cover based on other entities. Useful to link with the connection status of your RF Bridge or relays device.
+- `availability_template` if not specified will make the cover always available. You can use a template returning `True` or `False` in order to toggle availability of the cover based on other entities. Useful to link with the connection status of your RF Bridge or relays device. **Now fully supported in UI configuration** with template editor, autocomplete, and entity picker! Examples:
+  - RF Bridge monitoring: `{{ is_state('binary_sensor.rf_bridge_status', 'on') }}`
+  - Wrapper mode: `{{ not is_state('cover.original_cover', 'unavailable') }}`
+  - Complex conditions: `{{ is_state('binary_sensor.rf_bridge', 'on') and is_state('input_boolean.covers_enabled', 'on') }}`
 
 #### TILT Configuration:
 - `tilting_time_up` and `tilting_time_down` - time in seconds for the tilt to fully open/close. Can be float values (e.g., 1.5 seconds).
@@ -343,6 +556,67 @@ The cover entity provides these tilt-related attributes:
 - `tilt_is_allowed` - boolean indicating if tilt control is currently available
 - `tilt_only_when_closed` - shows the configured restriction mode
 - `tilting_time_up` / `tilting_time_down` - configured tilt travel times
+
+### Availability Template
+
+The `availability_template` feature allows you to dynamically control when a cover entity is available based on other entities or conditions in your Home Assistant installation.
+
+#### What is it?
+- A Jinja2 template that returns `True` (available) or `False` (unavailable)
+- When unavailable, the cover appears as "unavailable" in the UI
+- Prevents sending commands when the underlying hardware is offline
+- Updates automatically when monitored entities change state
+
+#### Common Use Cases:
+
+**1. RF Bridge Monitoring**
+```yaml
+availability_template: "{{ is_state('binary_sensor.rf_bridge_status', 'on') }}"
+```
+Cover is only available when RF Bridge is online.
+
+**2. Wrapper Mode - Track Original Entity**
+```yaml
+availability_template: "{{ not is_state('cover.original_cover', 'unavailable') }}"
+```
+Cover wrapper is only available when the wrapped entity is available.
+
+**3. Power Status**
+```yaml
+availability_template: "{{ is_state('binary_sensor.power_grid', 'on') }}"
+```
+Cover is unavailable during power outages.
+
+**4. Complex Conditions**
+```yaml
+availability_template: >
+  {{ is_state('binary_sensor.rf_bridge', 'on') and
+     is_state('input_boolean.covers_enabled', 'on') and
+     not is_state('alarm_control_panel.home', 'armed_away') }}
+```
+Multiple conditions: RF Bridge online, covers enabled, and alarm not in away mode.
+
+**5. Time Restrictions**
+```yaml
+availability_template: >
+  {{ is_state('binary_sensor.rf_bridge', 'on') and
+     now().hour >= 6 and now().hour < 23 }}
+```
+Cover only available between 6 AM and 11 PM.
+
+#### UI Configuration (New in v2.1!)
+When configuring via UI, you get:
+- **Template Editor**: Syntax highlighting and validation
+- **Autocomplete**: Suggests entity IDs and template functions
+- **Entity Picker**: Browse and select entities visually
+- **Live Validation**: Immediate feedback on template errors
+- **Easy Updates**: Modify template via Options flow without restart
+
+#### Benefits:
+- ✅ Better user experience - users see when devices are offline
+- ✅ Prevents wasted commands to unavailable devices
+- ✅ Safer automations - conditions can check availability
+- ✅ Easy diagnostics - immediately see connectivity issues
 
 ### Custom Services
 

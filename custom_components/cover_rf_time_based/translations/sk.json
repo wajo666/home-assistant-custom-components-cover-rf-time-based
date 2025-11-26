@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Vyberte režim konfigurácie",
+        "description": "Vyberte spôsob konfigurácie krytu.",
+        "data": {
+          "mode": "Režim konfigurácie"
+        }
+      },
+      "device_config": {
+        "title": "Konfigurácia krytu",
+        "description": "Nastavte konfiguráciu časovo riadeného krytu.",
+        "data": {
+          "name": "Názov",
+          "device_class": "Trieda zariadenia",
+          "travelling_time_down": "Čas behu dole",
+          "travelling_time_up": "Čas behu hore",
+          "tilting_time_down": "Čas naklápania dole",
+          "tilting_time_up": "Čas naklápania hore",
+          "command_delay": "Oneskorenie príkazu",
+          "send_stop_at_ends": "Poslať stop na koncoch",
+          "always_confident": "Vždy istý",
+          "tilt_only_when_closed": "Naklápať len keď je zatvorený",
+          "open_script_entity_id": "Script pre otvorenie",
+          "close_script_entity_id": "Script pre zatvorenie",
+          "stop_script_entity_id": "Script pre zastavenie",
+          "tilt_open_script_entity_id": "Script pre naklápanie hore (voliteľné)",
+          "tilt_close_script_entity_id": "Script pre naklápanie dole (voliteľné)",
+          "tilt_stop_script_entity_id": "Script pre zastavenie naklápania (voliteľné)",
+          "cover_entity_id": "Entita krytu",
+          "availability_template": "Šablóna dostupnosti (voliteľné)"
+        },
+        "data_description": {
+          "travelling_time_down": "Čas v sekundách na úplné zatvorenie krytu",
+          "travelling_time_up": "Čas v sekundách na úplné otvorenie krytu",
+          "tilting_time_down": "Čas v sekundách na úplné naklopenie lamiel dole",
+          "tilting_time_up": "Čas v sekundách na úplné naklopenie lamiel hore",
+          "command_delay": "Oneskorenie medzi zaslaním príkazu a štartom motora (pre RF zariadenia)",
+          "send_stop_at_ends": "Poslať príkaz stop pri dosiahnutí úplne otvorenej/zatvorenej pozície",
+          "always_confident": "Vždy považovať pozíciu za istú (bez neistoty)",
+          "tilt_only_when_closed": "Povoliť naklápanie len keď je kryt úplne zatvorený",
+          "availability_template": "Šablóna na určenie dostupnosti krytu (napr. {{ is_state('binary_sensor.rf_bridge', 'on') }})"
+        }
+      }
+    },
+    "error": {
+      "missing_scripts": "Všetky tri hlavné scripty (otvoriť, zatvoriť, zastaviť) sú povinné pre režim skriptov.",
+      "missing_cover_entity": "Entita krytu je povinná pre režim wrappera."
+    },
+    "abort": {
+      "already_configured": "Kryt s týmto názvom je už nakonfigurovaný."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavenie krytu",
+        "description": "Aktualizujte nastavenia krytu.",
+        "data": {
+          "travelling_time_down": "Čas behu dole",
+          "travelling_time_up": "Čas behu hore",
+          "tilting_time_down": "Čas naklápania dole",
+          "tilting_time_up": "Čas naklápania hore",
+          "command_delay": "Oneskorenie príkazu",
+          "send_stop_at_ends": "Poslať stop na koncoch",
+          "always_confident": "Vždy istý",
+          "tilt_only_when_closed": "Naklápať len keď je zatvorený",
+          "open_script_entity_id": "Script pre otvorenie",
+          "close_script_entity_id": "Script pre zatvorenie",
+          "stop_script_entity_id": "Script pre zastavenie",
+          "tilt_open_script_entity_id": "Script pre naklápanie hore (voliteľné)",
+          "tilt_close_script_entity_id": "Script pre naklápanie dole (voliteľné)",
+          "tilt_stop_script_entity_id": "Script pre zastavenie naklápania (voliteľné)",
+          "cover_entity_id": "Entita krytu",
+          "availability_template": "Šablóna dostupnosti (voliteľné)"
+        }
+      }
+    }
+  }
+}
+

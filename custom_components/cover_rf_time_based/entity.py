@@ -468,15 +468,30 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._assume_uncertain_position = not self._always_confident
         self._processing_known_position = False
         entity_id = self._resolve_script_entity(command)
-        service_data = {"entity_id": self._cover_entity_id} if self._cover_entity_id else {}
-        if command == SERVICE_SET_COVER_TILT_POSITION and self._has_tilt and 'tilt_position' in kwargs:
-            service_data[ATTR_TILT_POSITION] = kwargs['tilt_position']
-        if entity_id is None and not self._cover_entity_id:
-            entity_id = self._stop_script_entity_id
-        if self._cover_entity_id is not None:
+
+        # Determine if this is a tilt command
+        is_tilt_command = command in [
+            SERVICE_OPEN_COVER_TILT,
+            SERVICE_CLOSE_COVER_TILT,
+            SERVICE_STOP_COVER_TILT,
+            SERVICE_SET_COVER_TILT_POSITION
+        ]
+
+        # Hybrid mode: use wrapper for main commands, scripts for tilt commands
+        use_wrapper = self._cover_entity_id is not None and (not is_tilt_command or entity_id is None)
+        use_script = entity_id is not None and (not use_wrapper or is_tilt_command)
+
+        if use_wrapper:
+            service_data = {"entity_id": self._cover_entity_id}
+            if command == SERVICE_SET_COVER_TILT_POSITION and 'tilt_position' in kwargs:
+                service_data[ATTR_TILT_POSITION] = kwargs['tilt_position']
             await self.hass.services.async_call("cover", command, service_data, False)
-        elif entity_id:
+        elif use_script:
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": entity_id}, False)
+        elif not self._cover_entity_id and entity_id is None:
+            # Fallback to stop script if nothing else is configured
+            if self._stop_script_entity_id:
+                await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": self._stop_script_entity_id}, False)
 
     def _resolve_script_entity(self, command):
         if command == SERVICE_CLOSE_COVER:

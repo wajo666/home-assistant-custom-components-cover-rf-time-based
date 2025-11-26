@@ -1,6 +1,8 @@
 """Constants for cover_rf_time_based integration."""
 from datetime import timedelta
 
+DOMAIN = "cover_rf_time_based"
+
 # Warning / log messages
 TILT_BLOCKED_LOG = "Tilt command ignored for '%s'. Main cover is not fully closed (position: %d) and tilt_only_when_closed is True."
 

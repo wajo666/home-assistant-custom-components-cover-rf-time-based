@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/wajo666/home-assistant-custom-components-cover-rf-time-based.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/graphs/commit-activity)
 
-> **🎉 Version 2.1 Released!** - Full UI configuration support with template editor, hybrid wrapper mode, and HACS installation!
+> **🎉 Version 2.2.1 Released!** - Hybrid mode state synchronization! Covers now automatically sync with wrapped cover when controlled externally (physical switches, automations). Plus automatic YAML to UI migration, template editor, and HACS installation!
 
 Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based), modified for native cover entities, covers triggered by RF commands, or any other unidirectional methods.
 
@@ -133,6 +133,13 @@ Want to add tilt to a cover that doesn't support it?
 2. Select your existing cover (e.g., `cover.zigbee_blinds`)
 3. Add **Tilt Scripts** for custom tilt control
 4. Result: Main movement from Zigbee, tilt from your RF scripts!
+
+**🆕 Automatic State Synchronization (v2.2.1):**
+In hybrid/wrapper mode, the cover automatically syncs with the wrapped cover:
+- ✅ Control via physical switches → hybrid cover updates automatically
+- ✅ Control via automations → position stays synchronized
+- ✅ External state changes → reflected in real-time
+- ✅ No configuration needed → works out of the box!
 
 See [MIGRATION.md](MIGRATION.md) for detailed UI configuration guide.
 

@@ -5,7 +5,15 @@
         "title": "Choose Configuration Mode",
         "description": "Select how you want to configure the cover.",
         "data": {
+          "action": "Action",
           "mode": "Configuration Mode"
+        }
+      },
+      "migrate_yaml": {
+        "title": "Migrate YAML Configuration to UI",
+        "description": "This will migrate {device_count} cover(s) from your YAML configuration to UI configuration entries.\n\nAfter migration:\n- You can manage covers through the UI\n- Changes take effect without restarting Home Assistant\n- You can safely remove the YAML configuration\n- Entity IDs will remain the same\n\nDo you want to proceed with the migration?",
+        "data": {
+          "confirm": "Confirm Migration"
         }
       },
       "device_config": {
@@ -49,7 +57,8 @@
       "missing_cover_entity": "Cover entity is required for wrapper mode."
     },
     "abort": {
-      "already_configured": "A cover with this name is already configured."
+      "already_configured": "A cover with this name is already configured.",
+      "migration_cancelled": "YAML migration was cancelled."
     }
   },
   "options": {

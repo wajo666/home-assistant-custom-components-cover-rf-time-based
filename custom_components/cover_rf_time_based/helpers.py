@@ -49,6 +49,7 @@ BASE_DEVICE_SCHEMA = vol.Schema({
     vol.Optional(CONF_TRAVELLING_TIME_UP, default=DEFAULT_TRAVEL_TIME): cv.positive_int,
     vol.Optional(CONF_TILTING_TIME_DOWN, default=DEFAULT_TILT_TIME): vol.Any(cv.positive_int, cv.positive_float),
     vol.Optional(CONF_TILTING_TIME_UP, default=DEFAULT_TILT_TIME): vol.Any(cv.positive_int, cv.positive_float),
+    vol.Optional(CONF_COMMAND_DELAY, default=DEFAULT_COMMAND_DELAY): vol.Any(cv.positive_int, cv.positive_float),
     vol.Optional(CONF_SEND_STOP_AT_ENDS, default=DEFAULT_SEND_STOP_AT_ENDS): cv.boolean,
     vol.Optional(CONF_ALWAYS_CONFIDENT, default=DEFAULT_ALWAYS_CONFIDENT): cv.boolean,
     vol.Optional(CONF_BLOCK_TILT_IF_OPEN, default=DEFAULT_BLOCK_TILT_IF_OPEN): cv.boolean,
@@ -56,9 +57,9 @@ BASE_DEVICE_SCHEMA = vol.Schema({
     vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
 })
 SCRIPT_DEVICE_SCHEMA = BASE_DEVICE_SCHEMA.extend({
-    vol.Required(CONF_OPEN_SCRIPT_ENTITY_ID): cv.entity_id,
-    vol.Required(CONF_CLOSE_SCRIPT_ENTITY_ID): cv.entity_id,
-    vol.Required(CONF_STOP_SCRIPT_ENTITY_ID): cv.entity_id,
+    vol.Optional(CONF_OPEN_SCRIPT_ENTITY_ID): cv.entity_id,
+    vol.Optional(CONF_CLOSE_SCRIPT_ENTITY_ID): cv.entity_id,
+    vol.Optional(CONF_STOP_SCRIPT_ENTITY_ID): cv.entity_id,
     vol.Optional(CONF_TILT_OPEN_SCRIPT_ENTITY_ID): cv.entity_id,
     vol.Optional(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID): cv.entity_id,
     vol.Optional(CONF_TILT_STOP_SCRIPT_ENTITY_ID): cv.entity_id,

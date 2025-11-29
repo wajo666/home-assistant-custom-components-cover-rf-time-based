@@ -81,6 +81,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self.tilt_tc = TravelCalculator(config.tilting_time_down, config.tilting_time_up, config.command_delay)
         self._unsubscribe_auto_update = None
         self._unsub_availability_tracker = None
+        self._unsub_wrapper_state_listener = None
         self.hass = None
 
     @property
@@ -176,6 +177,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         await super().async_added_to_hass()
         await self._restore_state()
         self._setup_availability()
+        self._setup_wrapper_state_listener()
 
     async def _restore_state(self):
         old = await self.async_get_last_state()
@@ -207,6 +209,72 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             ).async_remove
         except Exception as ex:
             _LOGGER.error("%s: availability template setup failed: %s", self._name, ex, exc_info=True)
+
+    def _setup_wrapper_state_listener(self):
+        """Setup state listener for wrapped cover entity."""
+        if self._cover_entity_id is None:
+            return
+
+        @callback
+        def _wrapper_state_changed(event):
+            """Handle wrapped cover state changes."""
+            # Ignore if we're currently processing a command
+            if self.tc.is_traveling() or (self._has_tilt and self.tilt_tc.is_traveling()):
+                return
+
+            new_state = event.data.get("new_state")
+            if new_state is None:
+                return
+
+            # Update position from wrapped cover
+            new_position = new_state.attributes.get(ATTR_CURRENT_POSITION)
+            if new_position is not None:
+                try:
+                    new_position = int(new_position)
+                    if new_position != self.tc.current_position():
+                        _LOGGER.debug("%s: Syncing position from wrapper %s: %d",
+                                     self._name, self._cover_entity_id, new_position)
+                        self.tc.set_position(new_position)
+                        self._target_position = new_position
+                        self.async_write_ha_state()
+                except (ValueError, TypeError):
+                    pass
+
+            # Update tilt position if available (only if we don't have tilt scripts)
+            if self._has_tilt and not self._tilt_open_script_entity_id:
+                new_tilt = new_state.attributes.get(ATTR_CURRENT_TILT_POSITION)
+                if new_tilt is not None:
+                    try:
+                        new_tilt = int(new_tilt)
+                        if new_tilt != self.tilt_tc.current_position():
+                            _LOGGER.debug("%s: Syncing tilt from wrapper %s: %d",
+                                         self._name, self._cover_entity_id, new_tilt)
+                            self.tilt_tc.set_position(new_tilt)
+                            self._target_tilt_position = new_tilt
+                            self.async_write_ha_state()
+                    except (ValueError, TypeError):
+                        pass
+
+        try:
+            from homeassistant.helpers.event import async_track_state_change_event
+            self._unsub_wrapper_state_listener = async_track_state_change_event(
+                self.hass, self._cover_entity_id, _wrapper_state_changed
+            )
+            _LOGGER.debug("%s: Wrapper state listener setup for %s", self._name, self._cover_entity_id)
+        except Exception as ex:
+            _LOGGER.error("%s: wrapper state listener setup failed: %s", self._name, ex, exc_info=True)
+
+    async def async_will_remove_from_hass(self):
+        """Clean up when entity is removed."""
+        if self._unsub_availability_tracker is not None:
+            self._unsub_availability_tracker()
+            self._unsub_availability_tracker = None
+
+        if self._unsub_wrapper_state_listener is not None:
+            self._unsub_wrapper_state_listener()
+            self._unsub_wrapper_state_listener = None
+
+        self.stop_auto_updater()
 
     @property
     def is_tilting(self):

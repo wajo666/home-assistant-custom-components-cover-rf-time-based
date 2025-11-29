@@ -55,20 +55,43 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, import_data: dict[str, Any]) -> FlowResult:
         """Handle import from YAML configuration.
 
-        This creates a special config entry that represents YAML-configured entities.
-        It makes the integration visible in "Devices & Services" even when only
-        YAML configuration exists.
+        This can either create individual device entries or a placeholder.
+        When device_config is provided, it creates a proper config entry for that device.
         """
-        # Check if we already have an import entry
+        _LOGGER.info("Import step called with data: %s", import_data)
+
+        # Check if this is a device import (from automatic migration)
+        if "device_config" in import_data:
+            device_config = import_data["device_config"]
+            device_name = device_config.get(CONF_NAME, "Unknown")
+
+            # Check if this device is already configured (by name)
+            existing_entries = self._async_current_entries()
+            for entry in existing_entries:
+                if entry.data.get(CONF_NAME) == device_name:
+                    _LOGGER.info("Device '%s' already configured, skipping import", device_name)
+                    return self.async_abort(reason="already_configured")
+
+            # Set unique ID based on device name
+            await self.async_set_unique_id(f"yaml_import_{device_name}")
+            self._abort_if_unique_id_configured()
+
+            # Create entry for this device
+            _LOGGER.info("Creating config entry for imported device: %s", device_name)
+            return self.async_create_entry(
+                title=device_name,
+                data=device_config,
+            )
+
+        # Otherwise, create a placeholder entry for YAML configuration visibility
         existing_entries = self._async_current_entries()
         for entry in existing_entries:
-            if entry.source == "import":
-                # Already have an import entry, don't create another
-                _LOGGER.debug("Import entry already exists, skipping")
+            if entry.source == "import" and entry.data.get("yaml_config"):
+                _LOGGER.debug("YAML placeholder entry already exists, skipping")
                 return self.async_abort(reason="already_configured")
 
         # Create a special entry for YAML configuration
-        _LOGGER.info("Creating import config entry for YAML configuration")
+        _LOGGER.info("Creating placeholder config entry for YAML configuration")
         return self.async_create_entry(
             title="YAML Configuration",
             data={"yaml_config": True},
@@ -77,19 +100,86 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step - choose mode."""
+        """Handle the initial step - choose mode or migrate."""
         if user_input is not None:
-            self.mode = user_input[CONF_MODE]
-            return await self.async_step_device_config()
+            if user_input.get("action") == "migrate":
+                return await self.async_step_migrate_yaml()
+            else:
+                self.mode = user_input.get(CONF_MODE, MODE_SCRIPT)
+                return await self.async_step_device_config()
+
+        # Check if YAML configs are available for migration
+        yaml_configs = self.hass.data.get(DOMAIN, {}).get("yaml_configs", [])
+        total_yaml_devices = sum(len(cfg.get("devices", {})) for cfg in yaml_configs)
+
+        # Build options based on available migrations
+        if total_yaml_devices > 0:
+            # Offer migration option
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required("action", default="add"): vol.In({
+                        "add": "Add new cover",
+                        "migrate": f"Migrate {total_yaml_devices} YAML cover(s) to UI",
+                    }),
+                    vol.Optional(CONF_MODE, default=MODE_SCRIPT): vol.In({
+                        MODE_SCRIPT: "Script-based (recommended)",
+                        MODE_WRAPPER: "Wrapper (existing cover entity)",
+                    }),
+                }),
+            )
+        else:
+            # No migration available, just show mode selection
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required(CONF_MODE, default=MODE_SCRIPT): vol.In({
+                        MODE_SCRIPT: "Script-based (recommended)",
+                        MODE_WRAPPER: "Wrapper (existing cover entity)",
+                    }),
+                }),
+            )
+
+    async def async_step_migrate_yaml(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle YAML to UI migration."""
+        if user_input is not None:
+            if user_input.get("confirm"):
+                # Perform migration
+                from .migration import async_migrate_yaml_to_ui
+
+                yaml_configs = self.hass.data.get(DOMAIN, {}).get("yaml_configs", [])
+
+                for yaml_config in yaml_configs:
+                    await async_migrate_yaml_to_ui(self.hass, yaml_config)
+
+                # Clear the notification if it exists
+                await self.hass.services.async_call(
+                    "persistent_notification",
+                    "dismiss",
+                    {"notification_id": f"{DOMAIN}_migration_available"},
+                )
+
+                return self.async_create_entry(
+                    title="Migration Complete",
+                    data={"migration_completed": True},
+                )
+            else:
+                return self.async_abort(reason="migration_cancelled")
+
+        # Show confirmation form
+        yaml_configs = self.hass.data.get(DOMAIN, {}).get("yaml_configs", [])
+        total_devices = sum(len(cfg.get("devices", {})) for cfg in yaml_configs)
 
         return self.async_show_form(
-            step_id="user",
+            step_id="migrate_yaml",
             data_schema=vol.Schema({
-                vol.Required(CONF_MODE, default=MODE_SCRIPT): vol.In({
-                    MODE_SCRIPT: "Script-based (recommended)",
-                    MODE_WRAPPER: "Wrapper (existing cover entity)",
-                }),
+                vol.Required("confirm", default=False): bool,
             }),
+            description_placeholders={
+                "device_count": str(total_devices),
+            },
         )
 
     async def async_step_device_config(

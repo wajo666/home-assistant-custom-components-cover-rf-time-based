@@ -5,6 +5,100 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2025-11-29
+
+### Added
+- **Wrapper State Synchronization**: Hybrid mode covers now automatically sync with wrapped cover state
+  - New state listener in `entity.py` (`_setup_wrapper_state_listener()`)
+  - Automatically updates position when wrapped cover changes externally
+  - Syncs both main position and tilt position (if tilt scripts not configured)
+  - Ignores state changes during travel to prevent conflicts
+  - Proper cleanup in `async_will_remove_from_hass()`
+
+### Fixed
+- **Hybrid Mode State Sync**: Fixed issue where hybrid cover didn't update when controlling wrapped cover via physical switch
+  - State changes from external control (physical switches, automations) now properly reflected
+  - Both covers stay synchronized automatically
+  - No configuration changes required
+
+### Technical Details
+- State listener uses `async_track_state_change_event` for efficient event handling
+- Only active in hybrid/wrapper mode (no impact on script-only configurations)
+- Position sync only happens when cover is not traveling
+- Debug logging added for troubleshooting sync operations
+
+## [2.2.0] - 2025-01-29
+
+### Added
+- **Automatic YAML to UI Migration**: Seamless migration from YAML to UI configuration
+  - New `migration.py` module with automatic device migration logic
+  - **Automatic Migration Detection**: Integration detects YAML configs and offers migration
+  - **Persistent Notification**: Home Assistant shows migration reminder with device count
+  - **One-Click Migration**: Select "Migrate X YAML cover(s) to UI" from integration setup
+  - **Safe Migration**: Each device checked to avoid duplicates
+  - **Template Preservation**: Availability templates correctly migrated from YAML
+  - **Mode Detection**: Automatically detects script vs wrapper mode from YAML config
+  
+- **Enhanced Config Flow**:
+  - `async_step_migrate_yaml()`: Interactive migration workflow
+  - `async_step_import()`: Enhanced to support both device and placeholder imports
+  - **Migration Confirmation Dialog**: Shows device count and migration benefits
+  - **Action Selection**: Choose between adding new cover or migrating YAML configs
+  - Automatic notification dismissal after successful migration
+  
+- **Migration Helper Functions**:
+  - `async_migrate_yaml_to_ui()`: Migrates all YAML devices to UI config entries
+  - `_convert_yaml_device_to_ui()`: Converts individual YAML device to UI format
+  - `get_migration_instructions()`: Generates custom migration guide
+  - Template object to string conversion for availability_template
+  
+- **Improved Setup Flow**:
+  - Enhanced `async_setup()` to track YAML configs and available migrations
+  - Automatic placeholder entry creation for YAML visibility
+  - Device count tracking (YAML vs UI entries)
+  - Smart notification only when migration is beneficial
+
+### Changed
+- **Config Flow User Step**: Now shows migration option when YAML configs detected
+- **Import Step**: Supports both full device imports and placeholder creation
+- **Strings/Translations**: Added `migrate_yaml` step and `migration_cancelled` abort reason
+- **Setup Logic**: Better tracking of YAML configurations and existing entries
+
+### Fixed
+- **YAML Schema Validation**: Fixed `command_delay` not recognized in YAML configuration
+  - Added `CONF_COMMAND_DELAY` to `BASE_DEVICE_SCHEMA` in `helpers.py`
+  - Supports both integer and float values (e.g., 0.5 seconds)
+- **YAML Wrapper Mode Support**: Made script entity IDs optional in schema
+  - Changed `SCRIPT_DEVICE_SCHEMA` from `vol.Required` to `vol.Optional` for script fields
+  - Allows wrapper mode (`cover_entity_id`) without requiring script entity IDs
+  - Validation logic in `devices_from_config()` ensures either scripts OR cover_entity_id is provided
+- **Setup Error**: Fixed "Unable to prepare setup for platform" error
+  - Changed `persistent_notification` component access to use service calls
+  - Fixed in both `__init__.py` (notification creation) and `config_flow.py` (notification dismissal)
+  - Prevents setup failure when persistent_notification component is not yet loaded
+
+### Documentation
+- **YOUR_MIGRATION_GUIDE.md**: Custom migration guide for your specific configuration
+  - Detailed breakdown of all 3 covers (Obyvacka, Detska, Kuchyna)
+  - Exact scripts and settings for each device
+  - Both automatic and manual migration instructions
+  - Entity ID preservation details
+  - Troubleshooting section
+  
+- **MIGRATION.md**: Enhanced with automatic migration instructions
+- **README.md**: Updated installation section with HACS support
+
+### Technical Details
+- Migration preserves all YAML settings including:
+  - Travel and tilt times
+  - Script entity IDs
+  - Availability templates (converted from Template objects)
+  - Device class and special flags
+  - Command delay settings
+- Unique ID format: `yaml_import_{device_name}`
+- Migration is idempotent (safe to run multiple times)
+- No data loss during migration process
+
 ## [2.1.0] - 2025-01-26
 
 ### Added

@@ -5,25 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.4] - 2025-11-30
+## [2.2.5] - 2025-12-01
 
 ### Fixed
+- **CRITICAL: Stop Command in Wrapper Mode**: Fixed stop command not working in wrapper/hybrid mode
+  - **Problem**: When `stop_script_entity_id` was configured in wrapper mode, it was ignored
+  - Wrapper always tried to use wrapper cover's stop, even if stop_script was explicitly configured
+  - This broke stop functionality for covers where wrapper doesn't support stop properly
+  - **Solution**: If `stop_script_entity_id` is configured in wrapper mode, use it directly instead of wrapper's stop
+  - Ensures reliable stop in hybrid mode with explicit stop script configuration
+  - Debug logging added: "Using configured stop script for wrapper mode"
+
+- **Options Flow Deprecation**: Fixed deprecated config_entry assignment (HA 2025.12 compatibility)
+  - **Problem**: Explicit `self.config_entry = config_entry` in `__init__` is deprecated
+  - Will stop working in Home Assistant 2025.12
+  - **Solution**: Removed `__init__` method and parameter passing
+  - Use parent class `config_entry` property automatically
+  - Ensures future compatibility with HA 2025.12+
+
+- **Options Flow Field Deletion**: X button deletion now works perfectly with suggested_value
+  - **Problem**: Optional EntitySelector fields couldn't show current values AND allow deletion
+  - Previous attempts: default= blocked deletion, no default= showed empty fields
+  - **PERFECT SOLUTION**: Using `description={"suggested_value": ...}` for EntitySelectors
+  - ✅ **Shows current values** when opening Configure
+  - ✅ **X button works** - fields can be deleted by clicking X
+  - ✅ **No trade-offs** - best of both worlds!
+  - User confirmed: "všetko funguje" (everything works)
+  - Applies to both script and wrapper mode schemas
+
 - **Comprehensive Optional Field Validation Fix**: Fixed "Entity None is neither a valid entity ID nor a valid UUID" error for ALL optional fields
   - Fixes validation errors in **both script and wrapper modes**
   - Properly filters out None values and empty strings before creating config entries
+  - **Options flow schema fix**: Uses suggested_value instead of problematic defaults
+  - Prevents EntitySelector from causing validation errors
   - Applies to **all optional entity selectors**:
-    - Script mode: tilt_open_script, tilt_close_script, tilt_stop_script
-    - Wrapper mode: stop_script, tilt_open_script, tilt_close_script, tilt_stop_script
+    - Script mode: open_script, close_script, stop_script, tilt scripts
+    - Wrapper mode: cover_entity, stop_script, tilt scripts
   - Also filters empty template strings for availability_template field
   - Works in **both initial configuration and options flow**
   - Ensures clean configuration without None/empty values
 
 ### Technical Details
+- **Stop command fix** in `_handle_command()` method (entity.py)
+  - Added early return for SERVICE_STOP_COVER when both cover_entity and stop_script configured
+  - Prioritizes explicit stop_script configuration over wrapper's stop
+- **Options flow perfect solution** in options schemas (config_flow.py)
+  - Uses `description={"suggested_value": current_value}` for EntitySelectors
+  - Gets current value via `_get_current_value()` helper
+  - Applied to both `_get_script_options_schema()` and `_get_wrapper_options_schema()`
+  - Allows UI to show values without blocking X button deletion
+- **Options flow data persistence** in `async_step_init()` (config_flow.py)
+  - Updates `config_entry.data` directly via `async_update_entry()`
+  - Filters out None and empty string values from user_input
+  - Ensures deleted fields don't return after save
+- **Deprecation fix** in CoverRfTimeBasedOptionsFlow (config_flow.py)
+  - Removed `__init__()` method that set `self.config_entry`
+  - Relies on parent class property (HA 2025.12 compatible)
 - Enhanced None/empty string filtering in `async_step_device_config()` (initial config)
-- Enhanced None/empty string filtering in `async_step_init()` (options flow)
 - Filter applies universally before mode-specific processing
 - Prevents validation errors for any optional field left empty
 - Results in cleaner configuration data without null/empty entries
+
+## [2.2.4] - 2025-11-30
+
+### Changed
+- Version placeholder (superseded by 2.2.5)
 
 ## [2.2.3] - 2025-11-30
 

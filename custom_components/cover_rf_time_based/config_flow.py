@@ -339,30 +339,48 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
-    ) -> CoverRfTimeBasedOptionsFlow:
+    ) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
-        return CoverRfTimeBasedOptionsFlow(config_entry)
+        return CoverRfTimeBasedOptionsFlow()
 
 
 class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for Cover RF Time Based."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-        self.mode = config_entry.data.get(CONF_MODE, MODE_SCRIPT)
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
+        # config_entry is automatically available via self.config_entry from parent class
+        # mode is determined from config_entry.data
+        mode = self.config_entry.data.get(CONF_MODE, MODE_SCRIPT)
+
         if user_input is not None:
-            # Remove None values and empty strings from optional fields to prevent validation errors
-            user_input = {k: v for k, v in user_input.items() if v not in (None, "")}
-            return self.async_create_entry(title="", data=user_input)
+            # Start with core fields that must be preserved
+            updated_data = {
+                CONF_NAME: self.config_entry.data.get(CONF_NAME),
+                CONF_MODE: self.config_entry.data.get(CONF_MODE, MODE_SCRIPT),
+            }
+
+            # Add all values from user_input, filtering out None and empty strings
+            for key, value in user_input.items():
+                if value not in (None, ""):
+                    updated_data[key] = value
+
+            # Save changes to both data and options
+            # - data: ensures persistence (changes stay after restart)
+            # - options: triggers update_listener which reloads the entry
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data=updated_data,
+                options={}
+            )
+
+            return self.async_create_entry(title="", data={})
 
         # Build schema based on mode with current values
-        if self.mode == MODE_SCRIPT:
+        mode = self.config_entry.data.get(CONF_MODE, MODE_SCRIPT)
+        if mode == MODE_SCRIPT:
             schema = self._get_script_options_schema()
         else:
             schema = self._get_wrapper_options_schema()
@@ -460,80 +478,75 @@ class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
     def _get_script_options_schema(self) -> vol.Schema:
         """Get options schema for script mode."""
         base = self._get_base_options_schema().schema
-        base.update({
-            vol.Optional(
-                CONF_OPEN_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_OPEN_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_CLOSE_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_CLOSE_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_STOP_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_STOP_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_OPEN_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_OPEN_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_CLOSE_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_STOP_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_STOP_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-        })
+
+        # Show current values using suggested_value
+        # This displays current value in UI but allows deletion via X button
+
+        open_script = self._get_current_value(CONF_OPEN_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_OPEN_SCRIPT_ENTITY_ID, description={"suggested_value": open_script} if open_script else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        close_script = self._get_current_value(CONF_CLOSE_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_CLOSE_SCRIPT_ENTITY_ID, description={"suggested_value": close_script} if close_script else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        stop_script = self._get_current_value(CONF_STOP_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_STOP_SCRIPT_ENTITY_ID, description={"suggested_value": stop_script} if stop_script else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        tilt_open = self._get_current_value(CONF_TILT_OPEN_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_OPEN_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_open} if tilt_open else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        tilt_close = self._get_current_value(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_close} if tilt_close else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        tilt_stop = self._get_current_value(CONF_TILT_STOP_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_STOP_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_stop} if tilt_stop else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
         return vol.Schema(base)
 
     def _get_wrapper_options_schema(self) -> vol.Schema:
         """Get options schema for wrapper mode."""
         base = self._get_base_options_schema().schema
-        base.update({
-            vol.Optional(
-                CONF_COVER_ENTITY_ID,
-                default=self._get_current_value(CONF_COVER_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="cover")
-            ),
-            vol.Optional(
-                CONF_STOP_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_STOP_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_OPEN_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_OPEN_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_CLOSE_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-            vol.Optional(
-                CONF_TILT_STOP_SCRIPT_ENTITY_ID,
-                default=self._get_current_value(CONF_TILT_STOP_SCRIPT_ENTITY_ID)
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="script")
-            ),
-        })
+
+        # Show current values using suggested_value
+        # This displays current value in UI but allows deletion via X button
+
+        cover_entity = self._get_current_value(CONF_COVER_ENTITY_ID)
+        base[vol.Optional(CONF_COVER_ENTITY_ID, description={"suggested_value": cover_entity} if cover_entity else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="cover")
+        )
+
+        stop_script = self._get_current_value(CONF_STOP_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_STOP_SCRIPT_ENTITY_ID, description={"suggested_value": stop_script} if stop_script else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+
+        tilt_open = self._get_current_value(CONF_TILT_OPEN_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_OPEN_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_open} if tilt_open else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        tilt_close = self._get_current_value(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_CLOSE_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_close} if tilt_close else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
+        tilt_stop = self._get_current_value(CONF_TILT_STOP_SCRIPT_ENTITY_ID)
+        base[vol.Optional(CONF_TILT_STOP_SCRIPT_ENTITY_ID, description={"suggested_value": tilt_stop} if tilt_stop else None)] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="script")
+        )
+
         return vol.Schema(base)
+
 

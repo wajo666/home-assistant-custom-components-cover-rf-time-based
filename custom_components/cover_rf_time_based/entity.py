@@ -545,6 +545,13 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             SERVICE_SET_COVER_TILT_POSITION
         ]
 
+        # Special handling for stop command in wrapper mode with stop script configured
+        # If stop_script is explicitly configured, use it instead of wrapper's stop
+        if command == SERVICE_STOP_COVER and self._cover_entity_id and self._stop_script_entity_id:
+            _LOGGER.debug("%s: Using configured stop script for wrapper mode", self._name)
+            await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": self._stop_script_entity_id}, False)
+            return
+
         # Hybrid mode: use wrapper for main commands, scripts for tilt commands
         use_wrapper = self._cover_entity_id is not None and (not is_tilt_command or entity_id is None)
         use_script = entity_id is not None and (not use_wrapper or is_tilt_command)
@@ -556,12 +563,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             await self.hass.services.async_call("cover", command, service_data, False)
         elif use_script:
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": entity_id}, False)
-        elif entity_id is None:
-            # Fallback to stop script if nothing else is configured
-            # This handles cases where wrapper doesn't support stop command for main cover
-            if command == SERVICE_STOP_COVER and self._stop_script_entity_id:
-                _LOGGER.debug("%s: Using stop script as fallback for wrapper without stop support", self._name)
-                await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": self._stop_script_entity_id}, False)
 
     def _resolve_script_entity(self, command):
         if command == SERVICE_CLOSE_COVER:

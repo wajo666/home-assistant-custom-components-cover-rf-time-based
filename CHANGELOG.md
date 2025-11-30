@@ -5,21 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.1] - 2025-11-29
-
-### Added
-- **Wrapper State Synchronization**: Hybrid mode covers now automatically sync with wrapped cover state
-  - New state listener in `entity.py` (`_setup_wrapper_state_listener()`)
-  - Automatically updates position when wrapped cover changes externally
-  - Syncs both main position and tilt position (if tilt scripts not configured)
-  - Ignores state changes during travel to prevent conflicts
-  - Proper cleanup in `async_will_remove_from_hass()`
+## [2.2.2] - 2025-11-30
 
 ### Fixed
-- **Hybrid Mode State Sync**: Fixed issue where hybrid cover didn't update when controlling wrapped cover via physical switch
-  - State changes from external control (physical switches, automations) now properly reflected
-  - Both covers stay synchronized automatically
-  - No configuration changes required
+- **Hybrid Mode Stop Command Fallback**: Fixed stop command handling when wrapper cover doesn't support stop
+  - Previously, if wrapper cover entity didn't support `stop_cover` service, stop command was not sent at all
+  - Now uses `stop_script_entity_id` as fallback when wrapper doesn't support stop
+  - Ensures stop functionality works in hybrid mode even with limited wrapper capabilities
+  - Particularly useful for wrapper covers that only support open/close without stop
+  - Enhanced `_handle_command()` method in `entity.py` with intelligent fallback logic
+
+### Technical Details
+- Fallback logic activates when wrapper entity is configured but doesn't support stop
+- Stop script used as safety net for covers with limited command sets
+- Debug logging added for fallback operations
+- No impact on script-only or fully-functional wrapper configurations
+
+  - Previously, if wrapper cover entity didn't support `stop_cover` service, stop command was not sent at all
+  - Now uses `stop_script_entity_id` as fallback when wrapper doesn't support stop
+  - Ensures stop functionality works in hybrid mode even with limited wrapper capabilities
+  - Particularly useful for wrapper covers that only support open/close without stop
 
 ### Technical Details
 - State listener uses `async_track_state_change_event` for efficient event handling

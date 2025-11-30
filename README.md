@@ -226,6 +226,7 @@ The easiest way to set up covers is through the Home Assistant UI:
 **How it works:**
 - **Main movement** (open, close, stop, position) → Uses the wrapper cover entity
 - **Tilt control** (tilt open, tilt close, tilt stop, tilt position) → Uses your custom scripts
+- **Stop fallback** (v2.2.1) → If wrapper doesn't support stop, uses `stop_script_entity_id` as fallback
 
 **Configuration Steps:**
 1. Select **"Wrapper (existing cover entity)"** mode
@@ -235,6 +236,7 @@ The easiest way to set up covers is through the Home Assistant UI:
    - **Tilt Close Script**: `script.bedroom_tilt_close`
    - **Tilt Stop Script**: `script.bedroom_tilt_stop` (optional)
 4. Configure **Tilt Times** (e.g., 1.5 seconds)
+5. (Optional) Add **Stop Script** if wrapper doesn't support stop command
 
 **Example Scenario:**
 ```
@@ -244,6 +246,7 @@ Goal: Add RF-based tilt control
 Solution:
 - Wrapper Entity: cover.bedroom_blinds
 - Tilt Scripts: Custom RF scripts for tilt
+- Stop Script: script.bedroom_stop (if wrapper lacks stop support)
 - Result: Main movement uses existing cover, tilt uses RF scripts
 ```
 
@@ -252,6 +255,7 @@ Solution:
 - ✅ Add tilt functionality without modifying original integration
 - ✅ Use different control methods (e.g., Zigbee for main, RF for tilt)
 - ✅ Separate timing for main movement vs tilt
+- ✅ Automatic fallback to stop script if wrapper doesn't support stop
 - ✅ Best of both worlds!
 
 ### YAML Configuration (Legacy)

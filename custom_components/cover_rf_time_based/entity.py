@@ -556,9 +556,11 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             await self.hass.services.async_call("cover", command, service_data, False)
         elif use_script:
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": entity_id}, False)
-        elif not self._cover_entity_id and entity_id is None:
+        elif entity_id is None:
             # Fallback to stop script if nothing else is configured
-            if self._stop_script_entity_id:
+            # This handles cases where wrapper doesn't support stop command for main cover
+            if command == SERVICE_STOP_COVER and self._stop_script_entity_id:
+                _LOGGER.debug("%s: Using stop script as fallback for wrapper without stop support", self._name)
                 await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": self._stop_script_entity_id}, False)
 
     def _resolve_script_entity(self, command):

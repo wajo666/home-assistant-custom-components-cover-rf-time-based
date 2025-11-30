@@ -21,16 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Debug logging added for fallback operations
 - No impact on script-only or fully-functional wrapper configurations
 
-  - Previously, if wrapper cover entity didn't support `stop_cover` service, stop command was not sent at all
-  - Now uses `stop_script_entity_id` as fallback when wrapper doesn't support stop
-  - Ensures stop functionality works in hybrid mode even with limited wrapper capabilities
-  - Particularly useful for wrapper covers that only support open/close without stop
-
-### Technical Details
-- State listener uses `async_track_state_change_event` for efficient event handling
-- Only active in hybrid/wrapper mode (no impact on script-only configurations)
-- Position sync only happens when cover is not traveling
-- Debug logging added for troubleshooting sync operations
+**Note:** For wrapper mode to work correctly, the main cover entity (`cover_entity_id`) should handle:
+- Main movement: open, close, position (required)
+- Stop: optional - if not supported, configure `stop_script_entity_id` for fallback
+- Tilt: handled by tilt scripts if configured (not from wrapper)
 
 ## [2.2.0] - 2025-01-29
 

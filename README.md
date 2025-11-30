@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/wajo666/home-assistant-custom-components-cover-rf-time-based.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/graphs/commit-activity)
 
-> **🎉 Version 2.2.1 Released!** - Hybrid mode state synchronization! Covers now automatically sync with wrapped cover when controlled externally (physical switches, automations). Plus automatic YAML to UI migration, template editor, and HACS installation!
+> **🎉 Version 2.2.2 Released!** - Stop command fallback for hybrid mode! Covers with limited wrapper support now automatically use stop scripts as fallback. Plus automatic state sync, YAML to UI migration, and HACS installation!
 
 Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based), modified for native cover entities, covers triggered by RF commands, or any other unidirectional methods.
 
@@ -306,7 +306,7 @@ cover:
         tilt_only_when_closed: False #optional (defaults to False)
 ```
   
-**OR** using existing cover entity:  
+**OR** using existing cover entity (wrapper mode):  
   
 ```yaml
 cover:
@@ -322,6 +322,42 @@ cover:
         device_class: curtain #optional
         availability_template: "{{ not (is_state('cover.myroom', 'unavailable') or is_state('cover.myroom', 'unknown')) }}" #optional
 ```
+
+#### Hybrid Mode: Wrapper with Tilt Scripts (NEW in v2.1+)
+
+**Perfect for adding tilt to covers that don't support it!**
+
+Combine an existing cover entity for main movement with custom tilt scripts:
+
+```yaml
+cover:
+  - platform: cover_rf_time_based
+    devices:
+      living_room_blinds_hybrid:
+        name: Living Room Blinds
+        travelling_time_up: 28
+        travelling_time_down: 29
+        cover_entity_id: cover.zigbee_blinds  # Main movement from Zigbee cover
+        tilting_time_up: 5
+        tilting_time_down: 10
+        tilt_open_script_entity_id: script.rf_tilt_open  # Tilt from RF scripts
+        tilt_close_script_entity_id: script.rf_tilt_close
+        command_delay: 0
+        send_stop_at_ends: False
+        availability_template: "{{ not (is_state('cover.zigbee_blinds', 'unavailable') or is_state('cover.zigbee_blinds', 'unknown')) }}"
+```
+
+**How Hybrid Mode Works:**
+- **Main cover commands** (open, close, stop, set_position) → forwarded to `cover_entity_id`
+- **Tilt commands** (tilt_open, tilt_close, tilt_stop, set_tilt_position) → use your custom scripts
+- **Stop fallback** (v2.2.2+) → if wrapper doesn't support stop, uses `stop_script_entity_id`
+- **State sync** (v2.2.1+) → automatically syncs with wrapped cover when controlled externally
+
+**Real-World Example:**
+You have a Zigbee blind with open/close but no tilt. You want to add RF-based tilt control:
+- Zigbee handles: opening, closing, positioning
+- RF handles: tilting slats
+- Result: Best of both worlds!
 
 #### Configuration with TILT support using existing cover entity:
 ```yaml

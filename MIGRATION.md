@@ -15,6 +15,7 @@ This guide explains how to migrate your Cover RF Time Based integration from YAM
 
 Before starting, note down your current configuration from `configuration.yaml`:
 
+**Script-Based Example:**
 ```yaml
 cover:
   - platform: cover_rf_time_based
@@ -37,7 +38,28 @@ cover:
         tilt_only_when_closed: true
 ```
 
+**Wrapper/Hybrid Example:**
+```yaml
+cover:
+  - platform: cover_rf_time_based
+    devices:
+      living_room_cover:
+        name: "Living Room Cover"
+        travelling_time_down: 29
+        travelling_time_up: 28
+        cover_entity_id: cover.zigbee_blinds  # Wrapper mode
+        tilting_time_down: 10
+        tilting_time_up: 5
+        tilt_open_script_entity_id: script.tilt_open_rf
+        tilt_close_script_entity_id: script.tilt_close_rf
+        command_delay: 0
+        send_stop_at_ends: false
+        availability_template: "{{ not (is_state('cover.zigbee_blinds', 'unavailable') or is_state('cover.zigbee_blinds', 'unknown')) }}"
+```
+
 ### 2. Add New Cover via UI
+
+#### For Script-Based Mode:
 
 1. Go to **Settings** → **Devices & Services**
 2. Click **+ ADD INTEGRATION**
@@ -62,6 +84,34 @@ cover:
    - **Tilt Only When Closed**: checked
 
 6. Click **Submit**
+
+#### For Wrapper/Hybrid Mode:
+
+1. Go to **Settings** → **Devices & Services**
+2. Click **+ ADD INTEGRATION**
+3. Search for **"Cover Time Based"**
+4. Select **"Wrapper (existing cover entity)"** mode
+5. Fill in the configuration:
+   - **Name**: Living Room Cover
+   - **Cover Entity**: cover.zigbee_blinds
+   - **Device Class**: shutter
+   - **Travel Time Down**: 29 seconds
+   - **Travel Time Up**: 28 seconds
+   - **Tilt Time Down**: 10 seconds
+   - **Tilt Time Up**: 5 seconds
+   - **Command Delay**: 0 seconds
+   - **Tilt Open Script**: script.tilt_open_rf
+   - **Tilt Close Script**: script.tilt_close_rf
+   - **Send Stop at Ends**: unchecked
+   - **Availability Template**: `{{ not (is_state('cover.zigbee_blinds', 'unavailable') or is_state('cover.zigbee_blinds', 'unknown')) }}`
+
+6. Click **Submit**
+
+**What is Wrapper Mode?**
+- Wrapper mode uses an **existing cover entity** for main movement (open, close, stop, position)
+- You can add **custom tilt scripts** for tilt functionality
+- Perfect for adding tilt to covers that don't support it natively
+- Automatically syncs state with the wrapped cover (v2.2.1+)
 
 ### 3. Test the New Configuration
 

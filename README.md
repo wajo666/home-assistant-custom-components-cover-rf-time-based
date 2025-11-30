@@ -141,6 +141,12 @@ In hybrid/wrapper mode, the cover automatically syncs with the wrapped cover:
 - ✅ External state changes → reflected in real-time
 - ✅ No configuration needed → works out of the box!
 
+**🔄 Migrating from YAML?**
+- ✅ Automatic mode detection (wrapper vs script-based)
+- ✅ One-click migration preserves all settings
+- ✅ No manual configuration needed
+- See [MIGRATION.md](MIGRATION.md) for step-by-step guide.
+
 See [MIGRATION.md](MIGRATION.md) for detailed UI configuration guide.
 
 ### Option B: YAML Configuration (Legacy)

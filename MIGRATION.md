@@ -59,6 +59,31 @@ cover:
 
 ### 2. Add New Cover via UI
 
+**⚡ Automatic Migration (Recommended):**
+
+When you use the automatic migration feature, the system **automatically detects** whether your YAML configuration is wrapper or script-based:
+
+- **Has `cover_entity_id`?** → Migrates as **Wrapper mode**
+- **Has scripts only?** → Migrates as **Script mode**
+
+**You don't need to choose anything!** Just confirm the migration and all settings are preserved.
+
+**To use automatic migration:**
+1. Go to **Settings** → **Devices & Services**
+2. Find **Cover Time Based** integration (appears automatically if you have YAML configs)
+3. Click **Configure**
+4. Select **"Migrate X YAML cover(s) to UI"**
+5. Review device count
+6. Check **Confirm** checkbox
+7. Click **Submit**
+8. Done! All covers migrated with correct mode automatically
+
+---
+
+**Manual Migration (Alternative):**
+
+If you prefer to add covers manually instead of automatic migration:
+
 #### For Script-Based Mode:
 
 1. Go to **Settings** → **Devices & Services**

@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/wajo666/home-assistant-custom-components-cover-rf-time-based.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/graphs/commit-activity)
 
-> **🎉 Version 2.2.3 Released!** - UI configuration for stop script in wrapper mode! Now you can configure stop script fallback directly in the UI when using wrapper/hybrid mode. Plus all v2.2.2 features: stop command fallback, automatic state sync, and YAML migration!
+> **🎉 Version 2.2.4 Released!** - Comprehensive fix for optional field validation! All optional entity selectors and templates now work correctly when left empty in both script and wrapper modes. No more "Entity None" errors!
 
 Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based), modified for native cover entities, covers triggered by RF commands, or any other unidirectional methods.
 

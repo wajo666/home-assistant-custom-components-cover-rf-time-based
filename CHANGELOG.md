@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2025-11-30
+
+### Fixed
+- **Comprehensive Optional Field Validation Fix**: Fixed "Entity None is neither a valid entity ID nor a valid UUID" error for ALL optional fields
+  - Fixes validation errors in **both script and wrapper modes**
+  - Properly filters out None values and empty strings before creating config entries
+  - Applies to **all optional entity selectors**:
+    - Script mode: tilt_open_script, tilt_close_script, tilt_stop_script
+    - Wrapper mode: stop_script, tilt_open_script, tilt_close_script, tilt_stop_script
+  - Also filters empty template strings for availability_template field
+  - Works in **both initial configuration and options flow**
+  - Ensures clean configuration without None/empty values
+
+### Technical Details
+- Enhanced None/empty string filtering in `async_step_device_config()` (initial config)
+- Enhanced None/empty string filtering in `async_step_init()` (options flow)
+- Filter applies universally before mode-specific processing
+- Prevents validation errors for any optional field left empty
+- Results in cleaner configuration data without null/empty entries
+
 ## [2.2.3] - 2025-11-30
 
 ### Added
@@ -16,9 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Makes v2.2.2 stop fallback feature fully accessible via UI
   - Enhanced `config_flow.py` with wrapper mode schema updates
 
+### Fixed
+- **Entity Validation Error**: Fixed "Entity None is neither a valid entity ID nor a valid UUID" error
+  - Occurred when optional entity selector fields (like stop_script, tilt scripts) were left empty
+  - Now properly filters out None values and empty strings before creating config entries
+  - Applies to both initial configuration and options flow
+  - Prevents validation errors for optional script fields in all modes (script and wrapper)
+  - Also filters empty template strings for availability_template field
+
 ### Technical Details
 - UI schema updated in `config_flow.py` for both device configuration and options flow
 - Stop script field positioned logically under cover_entity_id in wrapper mode
+- Added None value filtering in `async_step_device_config()` and `async_step_init()`
 - Helpful tooltips explain fallback purpose for covers without native stop support
 - Fully compatible with existing v2.2.2 stop fallback logic
 

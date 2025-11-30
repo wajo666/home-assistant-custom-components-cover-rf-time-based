@@ -202,6 +202,9 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     errors["base"] = "missing_cover_entity"
 
             if not errors:
+                # Remove None values and empty strings from optional fields to prevent validation errors
+                user_input = {k: v for k, v in user_input.items() if v not in (None, "")}
+
                 # Create unique_id from name
                 await self.async_set_unique_id(user_input[CONF_NAME])
                 self._abort_if_unique_id_configured()
@@ -354,6 +357,8 @@ class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
+            # Remove None values and empty strings from optional fields to prevent validation errors
+            user_input = {k: v for k, v in user_input.items() if v not in (None, "")}
             return self.async_create_entry(title="", data=user_input)
 
         # Build schema based on mode with current values

@@ -125,6 +125,7 @@ If you prefer to add covers manually instead of automatic migration:
    - **Tilt Time Down**: 10 seconds
    - **Tilt Time Up**: 5 seconds
    - **Command Delay**: 0 seconds
+   - **Stop Script** (optional): script.rf_stop (fallback if wrapper doesn't support stop)
    - **Tilt Open Script**: script.tilt_open_rf
    - **Tilt Close Script**: script.tilt_close_rf
    - **Send Stop at Ends**: unchecked
@@ -135,6 +136,7 @@ If you prefer to add covers manually instead of automatic migration:
 **What is Wrapper Mode?**
 - Wrapper mode uses an **existing cover entity** for main movement (open, close, stop, position)
 - You can add **custom tilt scripts** for tilt functionality
+- **Stop Script** (new in v2.2.2): Optional fallback if wrapper doesn't support stop command
 - Perfect for adding tilt to covers that don't support it natively
 - Automatically syncs state with the wrapped cover (v2.2.1+)
 

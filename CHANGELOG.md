@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2025-11-30
+
+### Added
+- **UI Configuration for Stop Script in Wrapper Mode**: Added `stop_script_entity_id` field to wrapper mode UI
+  - Available in both initial configuration and options flow
+  - Allows setting stop script fallback when configuring/editing wrapper mode covers via UI
+  - Automatically migrated from YAML if present
+  - Updated translations (English, Slovak) with helpful descriptions
+  - Makes v2.2.2 stop fallback feature fully accessible via UI
+  - Enhanced `config_flow.py` with wrapper mode schema updates
+
+### Technical Details
+- UI schema updated in `config_flow.py` for both device configuration and options flow
+- Stop script field positioned logically under cover_entity_id in wrapper mode
+- Helpful tooltips explain fallback purpose for covers without native stop support
+- Fully compatible with existing v2.2.2 stop fallback logic
+
 ## [2.2.2] - 2025-11-30
 
 ### Fixed
@@ -19,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fallback logic activates when wrapper entity is configured but doesn't support stop
 - Stop script used as safety net for covers with limited command sets
 - Debug logging added for fallback operations
+- No impact on script-only or fully-functional wrapper configurations
 - No impact on script-only or fully-functional wrapper configurations
 
 **Note:** For wrapper mode to work correctly, the main cover entity (`cover_entity_id`) should handle:

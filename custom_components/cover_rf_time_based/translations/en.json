@@ -32,7 +32,7 @@
           "tilt_only_when_closed": "Tilt Only When Closed",
           "open_script_entity_id": "Open Script",
           "close_script_entity_id": "Close Script",
-          "stop_script_entity_id": "Stop Script",
+          "stop_script_entity_id": "Stop Script (or fallback for wrapper)",
           "tilt_open_script_entity_id": "Tilt Open Script (optional)",
           "tilt_close_script_entity_id": "Tilt Close Script (optional)",
           "tilt_stop_script_entity_id": "Tilt Stop Script (optional)",

@@ -24,7 +24,7 @@
           "tilt_only_when_closed": "Naklápať len keď je zatvorený",
           "open_script_entity_id": "Script pre otvorenie",
           "close_script_entity_id": "Script pre zatvorenie",
-          "stop_script_entity_id": "Script pre zastavenie",
+          "stop_script_entity_id": "Script pre zastavenie (alebo fallback pre wrapper)",
           "tilt_open_script_entity_id": "Script pre naklápanie hore (voliteľné)",
           "tilt_close_script_entity_id": "Script pre naklápanie dole (voliteľné)",
           "tilt_stop_script_entity_id": "Script pre zastavenie naklápania (voliteľné)",
@@ -40,6 +40,8 @@
           "send_stop_at_ends": "Poslať príkaz stop pri dosiahnutí úplne otvorenej/zatvorenej pozície",
           "always_confident": "Vždy považovať pozíciu za istú (bez neistoty)",
           "tilt_only_when_closed": "Povoliť naklápanie len keď je kryt úplne zatvorený",
+          "stop_script_entity_id": "Záložný stop script pre wrapper režim ak cover entita nepodporuje stop",
+          "cover_entity_id": "Existujúca cover entita na obalenie (pre wrapper/hybrid režim)",
           "availability_template": "Šablóna na určenie dostupnosti krytu (napr. {{ is_state('binary_sensor.rf_bridge', 'on') }})"
         }
       }

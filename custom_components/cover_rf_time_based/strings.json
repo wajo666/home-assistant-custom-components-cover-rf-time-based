@@ -32,7 +32,7 @@
           "tilt_only_when_closed": "Tilt Only When Closed",
           "open_script_entity_id": "Open Script",
           "close_script_entity_id": "Close Script",
-          "stop_script_entity_id": "Stop Script",
+          "stop_script_entity_id": "Stop Script (or fallback for wrapper)",
           "tilt_open_script_entity_id": "Tilt Open Script (optional)",
           "tilt_close_script_entity_id": "Tilt Close Script (optional)",
           "tilt_stop_script_entity_id": "Tilt Stop Script (optional)",
@@ -48,6 +48,8 @@
           "send_stop_at_ends": "Send stop command when reaching fully open/closed positions",
           "always_confident": "Always treat position as confident (no uncertainty)",
           "tilt_only_when_closed": "Only allow tilt commands when cover is fully closed",
+          "stop_script_entity_id": "Fallback stop script for wrapper mode if cover entity doesn't support stop",
+          "cover_entity_id": "Existing cover entity to wrap (for wrapper/hybrid mode)",
           "availability_template": "Template to determine cover availability (e.g. {{ is_state('binary_sensor.rf_bridge', 'on') }})"
         }
       }

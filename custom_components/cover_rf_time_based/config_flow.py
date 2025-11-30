@@ -317,6 +317,9 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_COVER_ENTITY_ID): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="cover")
             ),
+            vol.Optional(CONF_STOP_SCRIPT_ENTITY_ID): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="script")
+            ),
             vol.Optional(CONF_TILT_OPEN_SCRIPT_ENTITY_ID): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="script")
             ),
@@ -501,6 +504,12 @@ class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
                 default=self._get_current_value(CONF_COVER_ENTITY_ID)
             ): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="cover")
+            ),
+            vol.Optional(
+                CONF_STOP_SCRIPT_ENTITY_ID,
+                default=self._get_current_value(CONF_STOP_SCRIPT_ENTITY_ID)
+            ): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="script")
             ),
             vol.Optional(
                 CONF_TILT_OPEN_SCRIPT_ENTITY_ID,

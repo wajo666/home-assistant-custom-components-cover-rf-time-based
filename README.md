@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/wajo666/home-assistant-custom-components-cover-rf-time-based.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/graphs/commit-activity)
 
-> **🎉 Version 2.2.2 Released!** - Stop command fallback for hybrid mode! Covers with limited wrapper support now automatically use stop scripts as fallback. Plus automatic state sync, YAML to UI migration, and HACS installation!
+> **🎉 Version 2.2.3 Released!** - UI configuration for stop script in wrapper mode! Now you can configure stop script fallback directly in the UI when using wrapper/hybrid mode. Plus all v2.2.2 features: stop command fallback, automatic state sync, and YAML migration!
 
 Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based), modified for native cover entities, covers triggered by RF commands, or any other unidirectional methods.
 
@@ -358,12 +358,14 @@ cover:
 - **Tilt commands** (tilt_open, tilt_close, tilt_stop, set_tilt_position) → use your custom scripts
 - **Stop fallback** (v2.2.2+) → if wrapper doesn't support stop, uses `stop_script_entity_id`
 - **State sync** (v2.2.1+) → automatically syncs with wrapped cover when controlled externally
+- **Command delay** → applies to BOTH wrapper commands AND tilt scripts (use slower system's delay)
 
 **Real-World Example:**
 You have a Zigbee blind with open/close but no tilt. You want to add RF-based tilt control:
-- Zigbee handles: opening, closing, positioning
-- RF handles: tilting slats
-- Result: Best of both worlds!
+- Zigbee handles: opening, closing, positioning (fast, no delay needed)
+- RF handles: tilting slats (slower, may need 0.3-0.5s delay)
+- `command_delay: 0.5` → applies to both Zigbee AND RF commands
+- Result: Best of both worlds with precise positioning!
 
 #### Configuration with TILT support using existing cover entity:
 ```yaml
@@ -386,10 +388,12 @@ All mandatory settings self-explanatory.
 
 Optional settings:
 - `send_stop_at_ends` defaults to `False`. If set to `True`, the Stop script will be run after the cover reaches to 0 or 100 (closes or opens completely). This is for people who use interlocked relays in the scripts to drive the covers, which need to be released when the covers reach the end positions.
-- `command_delay` defaults to `0` (seconds). Specifies the delay between sending a command and the actual execution. This accounts for RF signal transmission delays, motor startup time, or any other delays in your system. **Important**: This delay applies to **both START and STOP commands**. For example, if set to `0.5`:
+- `command_delay` defaults to `0` (seconds). Specifies the delay between sending a command and the actual execution. This accounts for RF signal transmission delays, motor startup time, or any other delays in your system. **Important**: This delay applies to **both START and STOP commands** in **ALL modes** (script-based, wrapper, and hybrid). For example, if set to `0.5`:
   - OPEN command sent at t=0s → Motor starts at t=0.5s
   - For 30% position (3s travel): STOP sent at t=3.0s → Motor stops at t=3.5s (exactly at 30%)
   - This ensures the motor stops precisely at the target position without overshooting.
+  - **Wrapper/Hybrid mode**: Delay applies to wrapper cover commands AND tilt script commands
+  - **Recommendation**: Set to `0` for fast systems (Zigbee/Z-Wave), `0.3-0.5` for RF systems
 - `always_confident` defaults to `False`. **Controls whether Home Assistant treats the cover position as reliable or estimated.**
   - **`False` (default, recommended)**: Cover has `assumed_state = True`
     - UI knows the position is an **estimate** (calculated from time)

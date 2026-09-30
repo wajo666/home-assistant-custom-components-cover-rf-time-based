@@ -125,7 +125,7 @@ The easiest way to set up covers - no YAML editing required!
 - **Command Delay**: Delay between command and motor start (accounts for RF/motor delays)
 - **Scripts**: Scripts for open/close/stop (and optionally tilt)
 - **Availability Template**: Template to control when cover is available (optional)
-- **Options**: Send stop at ends, always confident, tilt restrictions
+- **Options**: Send stop at ends, always confident, tilt restrictions, and discrete tilt
 
 **Hybrid Mode Example:**
 Want to add tilt to a cover that doesn't support it?
@@ -133,6 +133,8 @@ Want to add tilt to a cover that doesn't support it?
 2. Select your existing cover (e.g., `cover.zigbee_blinds`)
 3. Add **Tilt Scripts** for custom tilt control
 4. Result: Main movement from Zigbee, tilt from your RF scripts!
+
+**Discrete Tilt:** For covers whose slats have fixed positions rather than a real 0-100% angle, enable **Discrete Tilt** in the cover configuration. Home Assistant will keep the Tilt Open, Tilt Close, and Tilt Stop actions, but hide the unsupported tilt percentage control. Leave this disabled for covers with continuous tilt.
 
 **🆕 Automatic State Synchronization (v2.2.1):**
 In hybrid/wrapper mode, the cover automatically syncs with the wrapped cover:
@@ -215,6 +217,7 @@ The easiest way to set up covers is through the Home Assistant UI:
 - **Wrapper Entity**: Existing cover entity to enhance (wrapper mode)
 - **Availability Template**: Jinja2 template to control availability (optional)
 - **Behavioral Options**: Send stop at ends, always confident, tilt restrictions
+- **Discrete Tilt**: Use Tilt Open/Tilt Close actions without a percentage control for covers with discrete slat positions
 
 **To modify settings later:**
 1. Go to **Settings** → **Devices & Services**
@@ -243,6 +246,7 @@ The easiest way to set up covers is through the Home Assistant UI:
    - **Tilt Stop Script**: `script.bedroom_tilt_stop` (optional)
 4. Configure **Tilt Times** (e.g., 1.5 seconds)
 5. (Optional) Add **Stop Script** if wrapper doesn't support stop command
+6. Enable **Discrete Tilt** when the cover supports only fixed slat positions instead of a continuous tilt angle
 
 **Example Scenario:**
 ```
@@ -940,4 +944,3 @@ web_server:
   port: 80
 
 ```
-

@@ -22,6 +22,7 @@ from .const import (
     CONF_SEND_STOP_AT_ENDS,
     CONF_ALWAYS_CONFIDENT,
     CONF_TILT_ONLY_WHEN_CLOSED,
+    CONF_DISCRETE_TILT,
     CONF_OPEN_SCRIPT_ENTITY_ID,
     CONF_CLOSE_SCRIPT_ENTITY_ID,
     CONF_STOP_SCRIPT_ENTITY_ID,
@@ -36,6 +37,7 @@ from .const import (
     DEFAULT_SEND_STOP_AT_ENDS,
     DEFAULT_ALWAYS_CONFIDENT,
     DEFAULT_TILT_ONLY_WHEN_CLOSED,
+    DEFAULT_DISCRETE_TILT,
     DEFAULT_COMMAND_DELAY,
     DOMAIN,
 )
@@ -285,6 +287,7 @@ class CoverRfTimeBasedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional(CONF_SEND_STOP_AT_ENDS, default=DEFAULT_SEND_STOP_AT_ENDS): selector.BooleanSelector(),
             vol.Optional(CONF_ALWAYS_CONFIDENT, default=DEFAULT_ALWAYS_CONFIDENT): selector.BooleanSelector(),
             vol.Optional(CONF_TILT_ONLY_WHEN_CLOSED, default=DEFAULT_TILT_ONLY_WHEN_CLOSED): selector.BooleanSelector(),
+            vol.Optional(CONF_DISCRETE_TILT, default=DEFAULT_DISCRETE_TILT): selector.BooleanSelector(),
             vol.Optional(CONF_AVAILABILITY_TEMPLATE): selector.TemplateSelector(),
         })
 
@@ -470,6 +473,10 @@ class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
                 default=self._get_current_value(CONF_TILT_ONLY_WHEN_CLOSED, DEFAULT_TILT_ONLY_WHEN_CLOSED)
             ): selector.BooleanSelector(),
             vol.Optional(
+                CONF_DISCRETE_TILT,
+                default=self._get_current_value(CONF_DISCRETE_TILT, DEFAULT_DISCRETE_TILT)
+            ): selector.BooleanSelector(),
+            vol.Optional(
                 CONF_AVAILABILITY_TEMPLATE,
                 default=self._get_current_value(CONF_AVAILABILITY_TEMPLATE)
             ): selector.TemplateSelector(),
@@ -548,5 +555,4 @@ class CoverRfTimeBasedOptionsFlow(config_entries.OptionsFlow):
         )
 
         return vol.Schema(base)
-
 

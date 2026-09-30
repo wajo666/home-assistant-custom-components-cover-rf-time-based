@@ -22,6 +22,7 @@
           "send_stop_at_ends": "Poslať stop na koncoch",
           "always_confident": "Vždy istý",
           "tilt_only_when_closed": "Naklápať len keď je zatvorený",
+          "discrete_tilt": "Diskrétne naklápanie",
           "open_script_entity_id": "Script pre otvorenie",
           "close_script_entity_id": "Script pre zatvorenie",
           "stop_script_entity_id": "Script pre zastavenie (alebo fallback pre wrapper)",
@@ -68,6 +69,7 @@
           "send_stop_at_ends": "Poslať stop na koncoch",
           "always_confident": "Vždy istý",
           "tilt_only_when_closed": "Naklápať len keď je zatvorený",
+          "discrete_tilt": "Diskrétne naklápanie",
           "open_script_entity_id": "Script pre otvorenie",
           "close_script_entity_id": "Script pre zatvorenie",
           "stop_script_entity_id": "Script pre zastavenie",
@@ -81,4 +83,3 @@
     }
   }
 }
-

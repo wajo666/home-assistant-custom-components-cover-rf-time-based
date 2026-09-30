@@ -14,6 +14,7 @@ class DeviceConfig:
     always_confident: bool
     block_tilt_if_open: bool
     tilt_only_when_closed: bool
+    discrete_tilt: bool
     availability_template: Optional[Any]
     command_delay: float
 
@@ -29,4 +30,3 @@ class ScriptsConfig:
 @dataclass(slots=True)
 class WrapperConfig:
     cover_entity_id: Optional[str]
-

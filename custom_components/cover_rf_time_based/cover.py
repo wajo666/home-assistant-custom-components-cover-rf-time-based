@@ -29,6 +29,7 @@ from .const import (
     CONF_ALWAYS_CONFIDENT,
     CONF_BLOCK_TILT_IF_OPEN,
     CONF_TILT_ONLY_WHEN_CLOSED,
+    CONF_DISCRETE_TILT,
     CONF_OPEN_SCRIPT_ENTITY_ID,
     CONF_CLOSE_SCRIPT_ENTITY_ID,
     CONF_STOP_SCRIPT_ENTITY_ID,
@@ -44,6 +45,7 @@ from .const import (
     DEFAULT_ALWAYS_CONFIDENT,
     DEFAULT_BLOCK_TILT_IF_OPEN,
     DEFAULT_TILT_ONLY_WHEN_CLOSED,
+    DEFAULT_DISCRETE_TILT,
     DEFAULT_COMMAND_DELAY,
 )
 from .helpers import PLATFORM_SCHEMA, devices_from_config
@@ -86,6 +88,7 @@ async def async_setup_entry(
         always_confident=config_data.get(CONF_ALWAYS_CONFIDENT, DEFAULT_ALWAYS_CONFIDENT),
         block_tilt_if_open=config_data.get(CONF_BLOCK_TILT_IF_OPEN, DEFAULT_BLOCK_TILT_IF_OPEN),
         tilt_only_when_closed=config_data.get(CONF_TILT_ONLY_WHEN_CLOSED, DEFAULT_TILT_ONLY_WHEN_CLOSED),
+        discrete_tilt=config_data.get(CONF_DISCRETE_TILT, DEFAULT_DISCRETE_TILT),
         availability_template=availability_template,
         command_delay=config_data.get(CONF_COMMAND_DELAY, DEFAULT_COMMAND_DELAY),
     )

@@ -19,6 +19,7 @@ CONF_SEND_STOP_AT_ENDS = 'send_stop_at_ends'
 CONF_ALWAYS_CONFIDENT = 'always_confident'
 CONF_BLOCK_TILT_IF_OPEN = 'block_tilt_if_open'
 CONF_TILT_ONLY_WHEN_CLOSED = 'tilt_only_when_closed'
+CONF_DISCRETE_TILT = 'discrete_tilt'
 CONF_OPEN_SCRIPT_ENTITY_ID = 'open_script_entity_id'
 CONF_CLOSE_SCRIPT_ENTITY_ID = 'close_script_entity_id'
 CONF_STOP_SCRIPT_ENTITY_ID = 'stop_script_entity_id'
@@ -48,6 +49,7 @@ DEFAULT_SEND_STOP_AT_ENDS = False
 DEFAULT_ALWAYS_CONFIDENT = False
 DEFAULT_BLOCK_TILT_IF_OPEN = False
 DEFAULT_TILT_ONLY_WHEN_CLOSED = False
+DEFAULT_DISCRETE_TILT = False
 DEFAULT_DEVICE_CLASS = 'shutter'
 DEFAULT_COMMAND_DELAY = 0
 

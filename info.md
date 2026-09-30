@@ -15,6 +15,7 @@ With this component you can add a time-based cover with optional **TILT support*
 - **Three custom services**: `set_known_position` (supports both position and tilt), `set_known_action`, and `send_command` (supports all cover and tilt commands)
 - Separate tilt scripts support or automatic fallback to main cover scripts
 - Configurable tilt behavior with `tilt_only_when_closed` option
+- Optional `discrete_tilt` mode for covers with fixed slat positions; keeps directional tilt actions while hiding percentage tilt control
 
 ## Component authors & contributors
     "@davidramosweb",

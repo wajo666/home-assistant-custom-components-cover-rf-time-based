@@ -30,6 +30,7 @@
           "send_stop_at_ends": "Send Stop at Ends",
           "always_confident": "Always Confident",
           "tilt_only_when_closed": "Tilt Only When Closed",
+          "discrete_tilt": "Discrete Tilt",
           "open_script_entity_id": "Open Script",
           "close_script_entity_id": "Close Script",
           "stop_script_entity_id": "Stop Script (or fallback for wrapper)",
@@ -64,6 +65,7 @@
           "send_stop_at_ends": "Send Stop at Ends",
           "always_confident": "Always Confident",
           "tilt_only_when_closed": "Tilt Only When Closed",
+          "discrete_tilt": "Discrete Tilt",
           "open_script_entity_id": "Open Script",
           "close_script_entity_id": "Close Script",
           "stop_script_entity_id": "Stop Script",
@@ -77,4 +79,3 @@
     }
   }
 }
-

@@ -18,6 +18,7 @@ from .const import (
     CONF_ALWAYS_CONFIDENT,
     CONF_BLOCK_TILT_IF_OPEN,
     CONF_TILT_ONLY_WHEN_CLOSED,
+    CONF_DISCRETE_TILT,
     CONF_AVAILABILITY_TEMPLATE,
     CONF_OPEN_SCRIPT_ENTITY_ID,
     CONF_CLOSE_SCRIPT_ENTITY_ID,
@@ -33,6 +34,7 @@ from .const import (
     DEFAULT_ALWAYS_CONFIDENT,
     DEFAULT_BLOCK_TILT_IF_OPEN,
     DEFAULT_TILT_ONLY_WHEN_CLOSED,
+    DEFAULT_DISCRETE_TILT,
     DEFAULT_COMMAND_DELAY,
 )
 from .models import DeviceConfig, ScriptsConfig, WrapperConfig
@@ -54,6 +56,7 @@ BASE_DEVICE_SCHEMA = vol.Schema({
     vol.Optional(CONF_ALWAYS_CONFIDENT, default=DEFAULT_ALWAYS_CONFIDENT): cv.boolean,
     vol.Optional(CONF_BLOCK_TILT_IF_OPEN, default=DEFAULT_BLOCK_TILT_IF_OPEN): cv.boolean,
     vol.Optional(CONF_TILT_ONLY_WHEN_CLOSED, default=DEFAULT_TILT_ONLY_WHEN_CLOSED): cv.boolean,
+    vol.Optional(CONF_DISCRETE_TILT, default=DEFAULT_DISCRETE_TILT): cv.boolean,
     vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
 })
 SCRIPT_DEVICE_SCHEMA = BASE_DEVICE_SCHEMA.extend({
@@ -89,6 +92,7 @@ def devices_from_config(domain_config):
             always_confident=c.get(CONF_ALWAYS_CONFIDENT, DEFAULT_ALWAYS_CONFIDENT),
             block_tilt_if_open=c.get(CONF_BLOCK_TILT_IF_OPEN, DEFAULT_BLOCK_TILT_IF_OPEN),
             tilt_only_when_closed=c.get(CONF_TILT_ONLY_WHEN_CLOSED, DEFAULT_TILT_ONLY_WHEN_CLOSED),
+            discrete_tilt=c.get(CONF_DISCRETE_TILT, DEFAULT_DISCRETE_TILT),
             availability_template=c.get(CONF_AVAILABILITY_TEMPLATE),
             command_delay=c.get(CONF_COMMAND_DELAY, DEFAULT_COMMAND_DELAY),
         )
@@ -110,4 +114,3 @@ def devices_from_config(domain_config):
         devices.append(CoverTimeBased(dev_id, base, scripts, wrapper))
         _REGISTERED_DEVICE_IDS.add(dev_id)
     return devices
-

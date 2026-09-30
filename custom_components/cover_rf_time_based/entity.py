@@ -33,6 +33,7 @@ from .const import (
     CONF_TILTING_TIME_UP,
     CONF_TILT_STOP_SCRIPT_ENTITY_ID,
     CONF_TILT_ONLY_WHEN_CLOSED,
+    CONF_DISCRETE_TILT,
     CONF_TRAVELLING_TIME_DOWN,
     CONF_TRAVELLING_TIME_UP,
     CONF_BLOCK_TILT_IF_OPEN,
@@ -55,6 +56,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._send_stop_at_ends = config.send_stop_at_ends
         self._always_confident = config.always_confident
         self._tilt_only_when_closed = config.tilt_only_when_closed
+        self._discrete_tilt = config.discrete_tilt
         self._assume_uncertain_position = not self._always_confident
         self._target_position = 0
         self._target_tilt_position = 0
@@ -101,12 +103,9 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             | CoverEntityFeature.STOP
         )
         if self._has_tilt:
-            feats |= (
-                CoverEntityFeature.OPEN_TILT
-                | CoverEntityFeature.CLOSE_TILT
-                | CoverEntityFeature.SET_TILT_POSITION
-                | CoverEntityFeature.STOP_TILT
-            )
+            feats |= CoverEntityFeature.OPEN_TILT | CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.STOP_TILT
+            if not self._discrete_tilt:
+                feats |= CoverEntityFeature.SET_TILT_POSITION
         return feats
 
     @property
@@ -166,6 +165,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             attr[CONF_TILTING_TIME_UP] = self._config.tilting_time_up
             attr[CONF_TILT_STOP_SCRIPT_ENTITY_ID] = self._tilt_stop_script_entity_id
             attr[CONF_TILT_ONLY_WHEN_CLOSED] = self._tilt_only_when_closed
+            attr[CONF_DISCRETE_TILT] = self._discrete_tilt
         attr[CONF_TRAVELLING_TIME_DOWN] = self._config.travel_time_down
         attr[CONF_TRAVELLING_TIME_UP] = self._config.travel_time_up
         attr[CONF_BLOCK_TILT_IF_OPEN] = self._config.block_tilt_if_open

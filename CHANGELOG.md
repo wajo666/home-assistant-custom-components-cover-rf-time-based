@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.6] - 2026-09-30
+
+### Added
+- **Discrete Tilt Mode**: Added the optional `discrete_tilt` setting for covers with fixed slat positions, such as Bubendorff roller shutters with orientable slats.
+  - Keeps Tilt Open, Tilt Close, and Tilt Stop actions available.
+  - Does not advertise percentage tilt control, so Home Assistant hides the unsupported tilt percentage input.
+  - Defaults to `false`; existing covers retain their continuous 0-100% tilt behavior.
+  - Available when creating a cover and in the integration's Configure options.
+
 ## [2.2.5] - 2025-12-01
 
 ### Fixed
@@ -329,4 +338,3 @@ Tested on Home Assistant 2025.11.1:
 For changes in previous versions, see commit history.
 
 [2.0.0]: https://github.com/wajo666/home-assistant-custom-components-cover-rf-time-based/releases/tag/v2.0.0
-
